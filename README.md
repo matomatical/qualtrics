@@ -142,27 +142,26 @@ The most common usage is to attach code that runs on page load, on page
 ready, on page submission[^submit], and on page unloading. Attach a script such as
 the following (based on the default code from the web editor).
 
-[^submit]:
-  Note that page submission triggers each time the user presses the submit
-  button for the page, even if, for example, the validation fails because of
-  some missing answers, and they end up staying on the page... so this code
-  might run multiple times!
+[^submit]: Note that page submission triggers each time the user presses the
+  submit button for the page, even if, for example, the validation fails
+  because of some missing answers, and they end up staying on the page... so
+  this code might run multiple times!
 
 ```js
 Qualtrics.SurveyEngine.addOnload(function() {
-	/* Place your JavaScript here to run when the page loads*/
+	/* run when the page loads*/
 });
 
 Qualtrics.SurveyEngine.addOnReady(function() {
-	/* Place your JavaScript here to run when the page is fully displayed*/
+	/* run when the page is fully displayed*/
 });
 
 Qualtrics.SurveyEngine.addOnPageSubmit(function() {
-	/* Place your JavaScript here to run when the submit button is pressed */
+	/* run when the submit button is pressed */
 });
 
 Qualtrics.SurveyEngine.addOnUnload(function() {
-	/* Place your JavaScript here to run when the page is unloaded*/
+	/* run when the page is unloaded*/
 });
 ```
 This script should be passed to the `script_js` field of a question
