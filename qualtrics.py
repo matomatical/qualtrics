@@ -222,6 +222,7 @@ class SliderQuestion(_Question):
     def __init__(self,
         data_export_tag,
         text_html,
+        script_js="",
         num_sliders=None,
         choice_labels=None,
         slider_min=0,
@@ -259,6 +260,7 @@ class SliderQuestion(_Question):
             },
             'Language': [],
             'QuestionText': text_html,
+            'QuestionJS':   script_js,
             'QuestionType': 'Slider',
             'Selector': 'HSLIDER',
             'Validation': {
@@ -275,6 +277,7 @@ class ConstantSumQuestion(_Question):
     def __init__(self,
         data_export_tag,
         text_html,
+        script_js="",
         num_sliders=None,
         choice_labels=None,
         slider_min=0,
@@ -318,6 +321,7 @@ class ConstantSumQuestion(_Question):
             'ClarifyingSymbolType': 'None',
             'Language': [],
             'QuestionText': text_html,
+            'QuestionJS':   script_js,
             'QuestionType': 'CS',
             'Selector': selector_string,
             'Validation': {
@@ -328,6 +332,41 @@ class ConstantSumQuestion(_Question):
                 },
             }
         })
+
+
+# # # JAVASCRIPT FOR QUESTIONS
+
+
+class QuestionJS:
+    @staticmethod
+    def _engine_wrap(method, script, args=()):
+        return "Qualtrics.SurveyEngine.addOn{}(function({}){{{}}});".format(
+            method,
+            ','.join(args),
+            f'\n{script}\n',
+        )
+
+    def __init__(self, *scripts):
+        self.scripts = scripts
+
+    def script(self):
+        return "\n\n".join(self.scripts)
+    
+    def on_load(self, script):
+        # yes, it's really lowercase l in "load", unlike the others...
+        return QuestionJS(*self.scripts, self._engine_wrap("load", script))
+
+    def on_ready(self, script):
+        return QuestionJS(*self.scripts, self._engine_wrap("Ready", script))
+    
+    def on_submit(self, script):
+        return QuestionJS(
+            *self.scripts,
+            self._engine_wrap("PageSubmit", script, args=("type",)),
+        )
+    
+    def on_unload(self, script):
+        return QuestionJS(*self.scripts, self._engine_wrap("Unload", script))
 
 
 # # # SURVEY BUILDER API

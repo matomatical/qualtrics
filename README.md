@@ -122,6 +122,59 @@ qq.Survey(
 ```
 
 
+Most question types allow a `script_js` parameter, which is a string that
+becomes JavaScript code attached to the question. The supported JS functions
+are those from the Qualtrics JavaScript Question API,
+  [documented here](https://api.qualtrics.com/82bd4d5c331f1-qualtrics-java-script-question-api-class).
+The most common usage is to attach code that runs on page load, on page
+ready, on page submission[^submit], and on page unloading. Attach a script such as
+the following (based on the default code from the web editor).
+
+[^submit]:
+  Note that page submission triggers each time the user presses the submit
+  button for the page, even if, for example, the validation fails because of
+  some missing answers, and they end up staying on the page... so this code
+  might run multiple times!
+
+```js
+Qualtrics.SurveyEngine.addOnload(function() {
+	/* Place your JavaScript here to run when the page loads*/
+});
+
+Qualtrics.SurveyEngine.addOnReady(function() {
+	/* Place your JavaScript here to run when the page is fully displayed*/
+});
+
+Qualtrics.SurveyEngine.addOnPageSubmit(function() {
+	/* Place your JavaScript here to run when the submit button is pressed */
+});
+
+Qualtrics.SurveyEngine.addOnUnload(function() {
+	/* Place your JavaScript here to run when the page is unloaded*/
+});
+```
+This script should be passed to the `script_js` field of a question
+constructor as a Python string. To make constructing this string a little
+easier, this library provides a builder class `QuestionJS`, which can be used
+as follows:
+
+```python
+q = TextGraphicQuestion(
+      text_html="<p>Hello, world!</p>",
+      script_js=QuestionJS() # builder pattern
+        .on_load('console.log("loaded!")')
+        .on_ready('console.log("ready!")')
+        .on_ready('console.log("ready! again!")')
+        .on_submit('console.log("submitting!")')
+        .on_unload('console.log("unloaded!")')
+        .script(), # always end with .script(), which converts to a string
+```
+
+It seems that an arbitrary number of chunks of code can be attached to each
+event (which is why I chose to use the builder pattern for this, rather than,
+say, a constructor with four optional arguments).
+
+
 Finally, one can make API calls directly, without wrapper classes. This
 includes methods for viewing, modifying, and deleting surveys from the
 Qualtrics account. For example, one useful pattern is to start the script by
