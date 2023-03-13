@@ -179,12 +179,12 @@ above:
 TextGraphicQuestion(
     text_html="<p>Hello, world!</p>",
     script_js=QuestionJS() # builder pattern
-        .on_load('console.log("loaded!")')
-        .on_ready('console.log("ready!")')
-        .on_ready('console.log("ready! again!")')
-        .on_submit('console.log("submitting!")')
-        .on_unload('console.log("unloaded!")')
-        .script(), # always end with .script(), which converts to a string
+        .on_load('console.log("loaded!");')
+        .on_ready('console.log("ready!");')
+        .on_ready('console.log("ready! again!");')
+        .on_submit('console.log("submitting!");')
+        .on_unload('console.log("unloaded!");')
+        .script(), # always call .script() (converts to str) 
 )
 ```
 
