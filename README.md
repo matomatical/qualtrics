@@ -18,10 +18,22 @@ the API and tips for extending the library are included below, and PRs are
 welcome (try to follow a similar interface and provide good defaults for new
 options).
 
-Note: This library is mainly for building surveys, not for downloading survey
-responses. For the latter, see for example
+Status: Early draft.
+
+TODO:
+
+* [x] basic API wrapper for key question types
+* [x] class-based interface for more succinct survey building
+* [ ] documentation
+* [ ] more question types and configuration options
+* [ ] class-based interface for the return types of the other API methods,
+  not just creating fresh surveys?
+
+Note: This library is mainly for building surveys. It is not for
+downloading survey responses, though Qualtrics offers an APi for that.
+For the latter, see for example
   [QualtricsAPI](https://github.com/Jaseibert/QualtricsAPI)
-or various tools build for R or other languages.
+or various tools built for R or other languages.
 
 
 Installation
