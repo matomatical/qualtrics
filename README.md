@@ -147,38 +147,45 @@ the following (based on the default code from the web editor).
   because of some missing answers, and they end up staying on the page... so
   this code might run multiple times!
 
-```js
-Qualtrics.SurveyEngine.addOnload(function() {
-	/* run when the page loads*/
-});
-
-Qualtrics.SurveyEngine.addOnReady(function() {
-	/* run when the page is fully displayed*/
-});
-
-Qualtrics.SurveyEngine.addOnPageSubmit(function() {
-	/* run when the submit button is pressed */
-});
-
-Qualtrics.SurveyEngine.addOnUnload(function() {
-	/* run when the page is unloaded*/
-});
+```python
+TextGraphicQuestion(
+    text_html="<p>Hello, world!</p>",
+    script_js="""// js
+        Qualtrics.SurveyEngine.addOnload(function() {
+            console.log("loaded!");
+        });
+        Qualtrics.SurveyEngine.addOnReady(function() {
+            console.log("ready!");
+        });
+        Qualtrics.SurveyEngine.addOnReady(function() {
+            console.log("ready again!");
+        });
+        Qualtrics.SurveyEngine.addOnPageSubmit(function() {
+            console.log("submitting!");
+        });
+        Qualtrics.SurveyEngine.addOnUnload(function() {
+            console.log("unloaded!");
+        });
+    """,
+)
 ```
-This script should be passed to the `script_js` field of a question
-constructor as a Python string. To make constructing this string a little
-easier, this library provides a builder class `QuestionJS`, which can be used
-as follows:
+
+To make constructing this string a little easier, this library provides a
+builder class `QuestionJS` that automatically wraps the added js code in the
+necessary method calls. Thus the following example is equivalent to the
+above:
 
 ```python
-q = TextGraphicQuestion(
-      text_html="<p>Hello, world!</p>",
-      script_js=QuestionJS() # builder pattern
+TextGraphicQuestion(
+    text_html="<p>Hello, world!</p>",
+    script_js=QuestionJS() # builder pattern
         .on_load('console.log("loaded!")')
         .on_ready('console.log("ready!")')
         .on_ready('console.log("ready! again!")')
         .on_submit('console.log("submitting!")')
         .on_unload('console.log("unloaded!")')
         .script(), # always end with .script(), which converts to a string
+)
 ```
 
 It seems that an arbitrary number of chunks of code can be attached to each

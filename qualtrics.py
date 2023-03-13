@@ -338,35 +338,37 @@ class ConstantSumQuestion(_Question):
 
 
 class QuestionJS:
-    @staticmethod
-    def _engine_wrap(method, script, args=()):
-        return "Qualtrics.SurveyEngine.addOn{}(function({}){{{}}});".format(
-            method,
-            ','.join(args),
-            f'\n{script}\n',
-        )
-
-    def __init__(self, *scripts):
-        self.scripts = scripts
+    def __init__(self):
+        self.scripts = []
 
     def script(self):
         return "\n\n".join(self.scripts)
     
     def on_load(self, script):
         # yes, it's really lowercase l in "load", unlike the others...
-        return QuestionJS(*self.scripts, self._engine_wrap("load", script))
+        self.scripts.append(self._engine_wrap("load", script))
+        return self
 
     def on_ready(self, script):
-        return QuestionJS(*self.scripts, self._engine_wrap("Ready", script))
+        self.scripts.append(self._engine_wrap("Ready", script))
+        return self
     
     def on_submit(self, script):
-        return QuestionJS(
-            *self.scripts,
-            self._engine_wrap("PageSubmit", script, args=("type",)),
-        )
+        self.scripts.append(self._engine_wrap("PageSubmit", script, "type"))
+        return self
     
     def on_unload(self, script):
-        return QuestionJS(*self.scripts, self._engine_wrap("Unload", script))
+        self.scripts.append(self._engine_wrap("Unload", script))
+        return self
+    
+    @staticmethod
+    def _engine_wrap(method, script, *args):
+        return "Qualtrics.SurveyEngine.addOn{}(function({}){{{}}});".format(
+            method,
+            ','.join(args),
+            f'\n{script}\n',
+        )
+
 
 
 # # # SURVEY BUILDER API
