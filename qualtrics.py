@@ -1,5 +1,6 @@
 # # # # QUALTRICS SURVEY BUILDER TOOLS
 
+import os
 import sys
 import json
 
@@ -598,7 +599,12 @@ class QualtricsSurveyDefinitionAPI:
 # # # RECIPES
 
 
-def delete_all_surveys_by_name(api, survey_name, print_surveys=False):
+def delete_all_surveys_by_name(
+    api,
+    survey_name,
+    print_surveys=False,
+    save_surveys=False,
+):
     surveys = api.list_surveys()['elements']
     print("found", len(surveys), "surveys total")
     
@@ -614,8 +620,15 @@ def delete_all_surveys_by_name(api, survey_name, print_surveys=False):
     print("deleting these surveys...")
     for survey in tqdm.tqdm(surveys):
         survey_id = survey["id"]
-        if print_surveys:
-            tqdm.tqdm.write(json.dumps(api.get_survey(survey_id), indent=2))
+        if print_surveys or save_surveys:
+            survey = api.get_survey(survey_id)
+            if print_surveys:
+                tqdm.tqdm.write(json.dumps(survey, indent=2))
+            if save_surveys:
+                path = os.path.join(save_surveys, f"{survey_id}.json")
+                tqdm.tqdm.write(f"saving survey {survey_id} to {path}")
+                with open(path, 'w') as fp:
+                    json.dump(survey, fp, indent=2)
         api.delete_survey(survey_id, warn=False) # already warned above
 
 
