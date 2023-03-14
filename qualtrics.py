@@ -119,7 +119,8 @@ class Survey:
         progress.close()
         
         print("survey", survey_id, "created")
-        print("edit survey at:", api.edit_survey_link(survey_id=survey_id))
+        print("edit survey at:", api.link_to_edit_survey(survey_id))
+        print("preview survey at:", api.link_to_preview_survey(survey_id))
 
 
 # # # BLOCKS
@@ -371,7 +372,6 @@ class QuestionJS:
         )
 
 
-
 # # # SURVEY BUILDER API
 
 
@@ -592,8 +592,11 @@ class QualtricsSurveyDefinitionAPI:
 
     # # Other
 
-    def edit_survey_link(self, survey_id):
-        return self.url + "/survey-builder/" + survey_id + "/edit"
+    def link_to_edit_survey(self, survey_id):
+        return f"{self.url}/survey-builder/{survey_id}/edit"
+
+    def link_to_preview_survey(self, survey_id):
+        return f"{self.url}/jfe/preview/{survey_id}"
 
 
 # # # RECIPES
