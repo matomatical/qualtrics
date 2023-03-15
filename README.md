@@ -30,11 +30,8 @@ TODO:
   not just creating fresh surveys?
 
 Note: This library is mainly for building surveys. It is not for
-downloading survey responses, though Qualtrics offers an APi for that.
-For the latter, see for example
-  [QualtricsAPI](https://github.com/Jaseibert/QualtricsAPI)
-or various tools built for R or other languages.
-
+downloading survey responses, though Qualtrics offers an API for that.
+See the [list of similar tools](#similar-tools).
 
 Installation
 ------------
@@ -340,3 +337,39 @@ Things that might work, haven't tried (only need one thing that works!):
 
 * creating an empty block and then editing questions out of the old block's
   element list and then back into the new block's element list?
+
+
+Similar tools
+-------------
+
+I haven't found anything that provides a convenient way to automate
+survey *building*, though there are a few substantial tools that
+automate other parts of the qualtrics API. Here are some I noticed
+based on a quick github search for 'qualtrics':
+
+Python:
+
+* https://github.com/Jaseibert/QualtricsAPI
+* https://github.com/Baguage/pyqualtrics
+* https://github.com/willgreenland/surveyhelper
+* https://github.com/cwade/py_qualtrics_api
+
+Ruby:
+
+* https://github.com/CambridgeEducation/qualtrics_api
+
+R:
+
+* https://github.com/emma-morgan/QualtricsTools
+* https://github.com/cloudyr/qualtrics
+
+PHP:
+
+* https://github.com/UI-Research/qualtrics-api-php
+
+Other links to explore later:
+
+* A guide to the Qualtrics Survey File format:
+  https://gist.github.com/ctesta01/d4255959dace01431fb90618d1e8c241
+* Related R project https://github.com/sumtxt/qsf
+* Some more of the qualtrics documentation...
