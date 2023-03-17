@@ -24,6 +24,7 @@ TODO:
 
 * [x] basic API wrapper for key question types
 * [x] class-based interface for more succinct survey building
+* [x] flows API and construction
 * [ ] documentation
 * [ ] more question types and configuration options
 * [ ] class-based interface for the return types of the other API methods,
@@ -262,6 +263,11 @@ Questions (for a survey with a particular id)
   * See also: blocks (above) for appending page breaks, which are not
     technically questions, but can be mixed with questions in a block.
 
+Flows
+
+* get the survey's flowchart
+* update the survey's flowchart
+* convenient classes for building certain types of flow elements
 
 Notes
 -----

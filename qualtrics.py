@@ -123,6 +123,97 @@ class Survey:
         print("preview survey at:", api.link_to_preview_survey(survey_id))
 
 
+# # # FLOWS
+
+
+class _FlowElement:
+    def __init__(self, children=(), **kwargs):
+        self.children = list(children)
+        self.kwargs = kwargs
+
+    def add_child(self, child):
+        self.children.append(child)
+
+    def compile(self, flow_id):
+        """
+        inputs:
+
+        flow_id: the flow_id for this element
+        
+        outputs:
+
+        1. the maximum flow_id among this element and its children, and
+        2. a dictionary describing this element's flow including any children
+           if present
+        """
+        # element data
+        my_flow_id = flow_id # save before we mutate it below :)
+        self.data = {
+            'FlowID': f"FL_{my_flow_id}",
+            **self.kwargs,
+        }
+        # child data
+        for child in self.children:
+            flow_id = child.compile(flow_id + 1)
+        if len(self.children) > 0:
+            self.data['Flow'] = [child.data for child in self.children]
+        # a fresh counter for the parent
+        return flow_id
+
+
+class RootFlow(_FlowElement):
+    def __init__(self, children=()):
+        super().__init__(
+            children=children,
+            Type='Root',
+        )
+    
+    def flow_data(self):
+        max_id = self.compile(flow_id=1)
+        self.data['Properties'] = {
+            'Count': max_id,
+            'RemovedFieldsets': [],
+        }
+        return self.data
+
+
+class BlockRandomizerFlow(_FlowElement):
+    
+    def __init__(self, n_samples, even_presentation, children=()):
+        super().__init__(
+            children=children,
+            Type="BlockRandomizer",
+            SubSet=n_samples,
+            EvenPresentation=even_presentation,
+        )
+
+
+class GroupFlow(_FlowElement):
+
+    def __init__(self, description="Untitled Group", children=()):
+        super().__init__(
+            children=children,
+            Type="Group",
+            Description=description,
+        )
+
+
+class BlockFlow(_FlowElement):
+    
+    def __init__(self, block_id):
+        super().__init__(
+            Type="Block",
+            ID=block_id,
+            Autofill=[],
+        )
+
+
+class EndSurveyFlow(_FlowElement):
+
+    def __init__(self):
+        super().__init__(Type="EndSurvey")
+    
+
 # # # BLOCKS
 
 
@@ -587,6 +678,24 @@ class QualtricsSurveyDefinitionAPI:
     def delete_block(self, survey_id, block_id):
         return self._delete(
             endpoint=f"survey-definitions/{survey_id}/blocks/{block_id}",
+        )
+
+
+    # # Flows
+
+    def get_flow(self, survey_id):
+        return self._get(endpoint=f"survey-definitions/{survey_id}/flow")
+
+    def update_flow(self, survey_id, flow_data):
+        return self._put(
+            endpoint=f"survey-definitions/{survey_id}/flow",
+            data=flows_data,
+        )
+
+    def update_flow_element(self, survey_id, flow_id, flow_element_data):
+        return self._put(
+            endpoint=f"survey-definitions/{surveu_id}/flow/{flow_id}",
+            data=flow_element_data,
         )
 
 
