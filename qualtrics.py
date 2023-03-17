@@ -142,23 +142,23 @@ class _FlowElement:
         
         outputs:
 
-        1. the maximum flow_id among this element and its children, and
-        2. a dictionary describing this element's flow including any children
-           if present
+        1. data: a dictionary describing this element's flow including any
+           children if present
+        2. max_id: the maximum flow_id among this element and its children
         """
         # element data
-        my_flow_id = flow_id # save before we mutate it below :)
-        self.data = {
-            'FlowID': f"FL_{my_flow_id}",
+        data = {
+            'FlowID': f"FL_{flow_id}",
             **self.kwargs,
         }
-        # child data
+        # children's data
+        children_data = []
         for child in self.children:
-            flow_id = child.compile(flow_id + 1)
-        if len(self.children) > 0:
-            self.data['Flow'] = [child.data for child in self.children]
-        # a fresh counter for the parent
-        return flow_id
+            child_data, flow_id = child.compile(flow_id + 1)
+        # put it together (if there are children)
+        if children_data: data['Flow'] = children_data
+        # return
+        return data, flow_id
 
 
 class RootFlow(_FlowElement):
@@ -169,12 +169,12 @@ class RootFlow(_FlowElement):
         )
     
     def flow_data(self):
-        max_id = self.compile(flow_id=1)
-        self.data['Properties'] = {
+        data, max_id = self.compile(flow_id=1)
+        data['Properties'] = {
             'Count': max_id,
             'RemovedFieldsets': [],
         }
-        return self.data
+        return data
 
 
 class BlockRandomizerFlow(_FlowElement):
