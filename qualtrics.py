@@ -8,7 +8,114 @@ import requests
 import tqdm         # TODO: remove/make optional dependency
 
 
-# # # SURVEY
+# # # SURVEYS
+
+class _Survey:
+
+    def __init__(self, name, **options):
+        self.name = name
+        self.options = options
+
+
+    def set_options(self, **options):
+        self.options = self.options | options
+
+
+    def set_header_html(self, header_html=""):
+        self.options['Header'] = header_html
+
+
+    def set_footer_html(self, footer_html=""):
+        self.options['Footer'] = footer_html
+
+
+    def set_custom_css(self, custom_css=""):
+        self.options['CustomStyles'] = {'customCSS': custom_css}
+
+
+    def set_external_css_url(self, external_css_url=""):
+        self.options['ExternalCSS'] = external_css_url
+
+
+    def create(self, api):
+        # create
+        print("creating survey... ", end="", flush=True)
+        survey_id = api.create_survey(survey_name=self.name)['SurveyID']
+        print("survey created with id", survey_id)
+            
+        if len(self.options) > 0:
+            print("configuring survey... ", end="", flush=True)
+            api.partial_update_survey_options(
+                survey_id=survey_id,
+                options_data=self.options,
+            )
+            print("survey configured")
+
+        print("editor: ", api.link_to_edit_survey(survey_id))
+        print("preview:", api.link_to_preview_survey(survey_id))
+
+        return survey_id
+
+
+
+class BasicSurvey(_Survey):
+
+    def __init__(self, name, questions=(), **options):
+        super().__init__(name, **options)
+        self.questions = list(questions)
+
+
+    def append_question(self, question):
+        self.questions.append(question)
+
+
+    def create(self, api):
+        super().create(api)
+        
+        n_questions = len(self.questions)
+        print(f"populating survey: {n_questions} questions")
+        progress = tqdm.tqdm(total=n_questions, dynamic_ncols=True)
+        for question in self.questions:
+            question.create(api, survey_id, block_id=None) # default block
+            progress.update()
+        progress.close()
+        print("survey", survey_id, "populated")
+
+
+class BlockSurvey(_Survey):
+
+    def __init__(self, name, blocks=(), **options):
+        super().__init__(name, **options)
+        self.blocks = list(blocks)
+
+
+    def append_block(self, block):
+        self.blocks.append(block)
+
+
+    def create(self, api):
+        super().create(api)
+        
+        n_questions = len(self.questions)
+        print(f"populating survey: {n_questions} questions")
+        progress = tqdm.tqdm(total=n_questions, dynamic_ncols=True)
+        for question in self.questions:
+            question.create(api=api, survey_id=survey_id) # default block
+            progress.update()
+        progress.close()
+        print("survey", survey_id, "populated")
+        n_blocks = len(self.blocks)
+        n_questions = sum(len(b.questions) for b in self.blocks)
+        print(f"populating survey: {n_blocks} blocks, {n_questions} questions")
+        progress = tqdm.tqdm(total=n_blocks+n_questions, dynamic_ncols=True)
+        for block in self.blocks:
+            block_id = api.create_block(survey_id=survey_id)['BlockID']
+            progress.update()
+            for question in block.questions:
+                question.create(api, survey_id, block_id=block_id)
+                progress.update()
+        progress.close()
+        print("survey", survey_id, "populated")
 
 
 class Survey:
@@ -219,30 +326,16 @@ class EndSurveyFlow(_FlowElement):
 
 class Block:
 
-    def __init__(self, questions=None):
-        if questions is None:
-            questions = []
-        self.questions = []
-        for question in questions:
-            self.add_question(question)
+    def __init__(self, questions=()):
+        self.questions = list(questions)
 
 
     def add_question(self, question):
         self.questions.append(question)
-    
+
 
     def add_page_break(self):
         self.questions.append(PageBreak())
-
-
-    def create(self, api, survey_id, progress=None):
-        # create
-        block_id = api.create_block(survey_id=survey_id)['BlockID']
-        
-        # populate
-        for question in self.questions:
-            question.create(api=api, survey_id=survey_id, block_id=block_id)
-            if progress is not None: progress.update()
         
 
 # # # QUESTIONS
@@ -257,6 +350,7 @@ class _Question:
     def __init__(self, data):
         self.data = data
 
+
     def create(self, api, survey_id, block_id=None):
         api.create_question(
             survey_id=survey_id,
@@ -265,14 +359,15 @@ class _Question:
         )
 
 
+
 class TextGraphicQuestion(_Question):
     def __init__(self, text_html, script_js=""):
         super().__init__(data={
             'QuestionText': text_html,
-            'QuestionJS':   script_js,
+            'QuestionJS': script_js,
             'QuestionType': 'DB',
-            'Selector':     'TB',
-            'Language':     [], # this silences a translation warning...
+            'Selector': 'TB',
+            'Language': [], # this silences a translation warning...
         })
 
 
