@@ -125,24 +125,28 @@ class FlowSurvey(_Survey):
         # create element tree
         root = RootFlow(children=self.elements)
         # gather duplicate blocks
-        blocks = {flow.block for flow in root.get_block_flows()}
+        block_ids = {flow.block: None for flow in root.get_block_flows()}
 
-        n_blocks = len(blocks)
-        n_questions = sum(len(b.questions) for b in blocks)
+        n_blocks = len(block_ids)
+        n_questions = sum(len(b.questions) for b in block_ids)
         print(f"populating survey: {n_blocks} blocks, {n_questions} questions")
         progress = tqdm.tqdm(total=n_blocks+n_questions, dynamic_ncols=True)
-        for block in blocks:
-            block.block_id = api.create_block(survey_id=survey_id)['BlockID']
+        for block in block_ids:
+            block_id = api.create_block(survey_id=survey_id)['BlockID']
+            block_ids[block] = block_id
             progress.update()
             for question in block.questions:
-                question.create(api, survey_id, block_id=block.block_id)
+                question.create(api, survey_id, block_id=block_id)
                 progress.update()
         progress.close()
         print("survey", survey_id, "populated")
 
         # and finally, compile and push the flow
         print("reflowing survey... ", end="", flush=True)
-        api.update_flow(survey_id=survey_id, flow_data=root.flow_data())
+        api.update_flow(
+            survey_id=survey_id,
+            flow_data=root.flow_data(block_ids),
+        )
         print("survey reflowed")
 
 
@@ -157,11 +161,12 @@ class _FlowElement:
     def append_child(self, child):
         self.children.append(child)
 
-    def compile(self, flow_id):
+    def compile(self, flow_id, block_id_map):
         """
         inputs:
 
         flow_id: the flow_id for this element
+        block_id_map: dictionary from block object to block id string
         
         outputs:
 
@@ -177,7 +182,7 @@ class _FlowElement:
         # children's data
         children_data = []
         for child in self.children:
-            child_data, flow_id = child.compile(flow_id + 1)
+            child_data, flow_id = child.compile(flow_id + 1, block_id_map)
             children_data.append(child_data)
         # put it together (if there are children)
         if children_data: data['Flow'] = children_data
@@ -194,12 +199,12 @@ class BlockFlow(_FlowElement):
     def __init__(self, block):
         self.block = block
 
-    def compile(self, flow_id):
+    def compile(self, flow_id, block_id_map):
         # element data
         return {
             'FlowID': f"FL_{flow_id}",
             'Type': "Block",
-            'ID': self.block.block_id,
+            'ID': block_id_map[self.block],
             'Autofill': [],
         }, flow_id
     
@@ -215,8 +220,8 @@ class RootFlow(_FlowElement):
             Type='Root',
         )
     
-    def flow_data(self):
-        data, max_id = self.compile(flow_id=1)
+    def flow_data(self, block_id_map):
+        data, max_id = self.compile(flow_id=1, block_id_map=block_id_map)
         data['Properties'] = {
             'Count': max_id,
             'RemovedFieldsets': [],
