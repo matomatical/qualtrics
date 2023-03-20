@@ -38,7 +38,6 @@ class _Survey:
 
 
     def create(self, api):
-        # create
         print("creating survey... ", end="", flush=True)
         survey_id = api.create_survey(survey_name=self.name)['SurveyID']
         print("survey created with id", survey_id)
@@ -57,7 +56,6 @@ class _Survey:
         return survey_id
 
 
-
 class BasicSurvey(_Survey):
 
     def __init__(self, name, questions=(), **options):
@@ -70,7 +68,7 @@ class BasicSurvey(_Survey):
 
 
     def create(self, api):
-        super().create(api)
+        survey_id = super().create(api)
         
         n_questions = len(self.questions)
         print(f"populating survey: {n_questions} questions")
@@ -94,16 +92,8 @@ class BlockSurvey(_Survey):
 
 
     def create(self, api):
-        super().create(api)
+        survey_id = super().create(api)
         
-        n_questions = len(self.questions)
-        print(f"populating survey: {n_questions} questions")
-        progress = tqdm.tqdm(total=n_questions, dynamic_ncols=True)
-        for question in self.questions:
-            question.create(api=api, survey_id=survey_id) # default block
-            progress.update()
-        progress.close()
-        print("survey", survey_id, "populated")
         n_blocks = len(self.blocks)
         n_questions = sum(len(b.questions) for b in self.blocks)
         print(f"populating survey: {n_blocks} blocks, {n_questions} questions")
@@ -118,116 +108,42 @@ class BlockSurvey(_Survey):
         print("survey", survey_id, "populated")
 
 
-class Survey:
-    
-    def __init__(self,
-        name,
-        blocks=None,
-        questions=None,
-        header_html=None,
-        footer_html=None,
-        custom_css=None,
-        external_css_url=None,
-    ):
-        # mandatory name
-        self.name = name
+class FlowSurvey(_Survey):
 
-        # optional questions
-        self.questions = []
-        if questions:
-            for question in questions:
-                self.add_question(question)
-        
-        # optional blocks
-        self.blocks = []
-        if blocks:
-            for block in blocks:
-                self.add_block(block)
-        
-        # optional config
-        self.header_html = ""
-        self.footer_html = ""
-        self.custom_css = ""
-        self.external_css_url = ""
-        self.configured = False
-        self.configure(
-            header_html=header_html,
-            footer_html=footer_html,
-            custom_css=custom_css,
-            external_css_url=external_css_url,
-        )
+    def __init__(self, name, elements=(), **options):
+        super().__init__(name, **options)
+        self.elements = list(elements)
 
     
-    def configure(self, 
-        header_html=None,
-        footer_html=None,
-        custom_css=None,
-        external_css_url=None,
-    ):
-        if header_html is not None:
-            self.header_html = header_html
-            self.configured = True
-        if footer_html is not None:
-            self.footer_html = footer_html
-            self.configured = True
-        if custom_css is not None:
-            self.custom_css = custom_css
-            self.configured = True
-        if external_css_url is not None:
-            self.external_css_url = external_css_url
-            self.configured = True
-
-    
-    def add_block(self, block):
-        self.blocks.append(block)
-        return block
+    def append_element(self, element):
+        self.elements.append(element)
 
 
-    def add_question(self, question):
-        self.questions.append(question)
-        return question
-
-    
     def create(self, api):
-        # todo: delete old surveys?
-        
-        # create
-        print("creating survey... ", end="", flush=True)
-        survey_id = api.create_survey(survey_name=self.name)['SurveyID']
-        print("survey created with id", survey_id)
-        
-        # config
-        if self.configured:
-            print("configuring survey... ", end="", flush=True)
-            api.partial_update_survey_options(
-                survey_id=survey_id,
-                options_data={
-                    'Header': self.header_html,
-                    'Footer': self.footer_html,
-                    'CustomStyles': {"customCSS": self.custom_css},
-                    'ExternalCSS': self.external_css_url,
-                },
-            )
-            print("survey configured")
+        survey_id = super().create(api)
 
-        # populate
-        n_blocks = len(self.blocks)
-        n_questions = len(self.questions) \
-                      + sum(len(b.questions) for b in self.blocks)
+        # create element tree
+        root = RootFlow(children=self.elements)
+        # gather duplicate blocks
+        blocks = {flow.block for flow in root.get_block_flows()}
+
+        n_blocks = len(blocks)
+        n_questions = sum(len(b.questions) for b in blocks)
         print(f"populating survey: {n_blocks} blocks, {n_questions} questions")
         progress = tqdm.tqdm(total=n_blocks+n_questions, dynamic_ncols=True)
-        for question in self.questions:
-            question.create(api=api, survey_id=survey_id) # default block
+        for block in blocks:
+            block.block_id = api.create_block(survey_id=survey_id)['BlockID']
             progress.update()
-        for block in self.blocks:
-            block.create(api=api, survey_id=survey_id, progress=progress)
-            progress.update()
-
+            for question in block.questions:
+                question.create(api, survey_id, block_id=block.block_id)
+                progress.update()
         progress.close()
-        
-        print("survey", survey_id, "created")
-        print("edit survey at:", api.link_to_edit_survey(survey_id))
-        print("preview survey at:", api.link_to_preview_survey(survey_id))
+        print("survey", survey_id, "populated")
+
+        # and finally, compile and push the flow
+        print("reflowing survey... ", end="", flush=True)
+        api.update_flow(survey_id=survey_id, flow_data=root.flow_data())
+        print("survey reflowed")
 
 
 # # # FLOWS
@@ -238,7 +154,7 @@ class _FlowElement:
         self.children = list(children)
         self.kwargs = kwargs
 
-    def add_child(self, child):
+    def append_child(self, child):
         self.children.append(child)
 
     def compile(self, flow_id):
@@ -262,13 +178,37 @@ class _FlowElement:
         children_data = []
         for child in self.children:
             child_data, flow_id = child.compile(flow_id + 1)
+            children_data.append(child_data)
         # put it together (if there are children)
         if children_data: data['Flow'] = children_data
         # return
         return data, flow_id
 
+    def get_block_flows(self):
+        for child in self.children:
+            yield from child.get_block_flows()
+
+
+class BlockFlow(_FlowElement):
+
+    def __init__(self, block):
+        self.block = block
+
+    def compile(self, flow_id):
+        # element data
+        return {
+            'FlowID': f"FL_{flow_id}",
+            'Type': "Block",
+            'ID': self.block.block_id,
+            'Autofill': [],
+        }, flow_id
+    
+    def get_block_flows(self):
+        yield self
+    
 
 class RootFlow(_FlowElement):
+
     def __init__(self, children=()):
         super().__init__(
             children=children,
@@ -305,21 +245,11 @@ class GroupFlow(_FlowElement):
         )
 
 
-class BlockFlow(_FlowElement):
-    
-    def __init__(self, block_id):
-        super().__init__(
-            Type="Block",
-            ID=block_id,
-            Autofill=[],
-        )
-
-
 class EndSurveyFlow(_FlowElement):
 
     def __init__(self):
         super().__init__(Type="EndSurvey")
-    
+
 
 # # # BLOCKS
 
@@ -330,11 +260,11 @@ class Block:
         self.questions = list(questions)
 
 
-    def add_question(self, question):
+    def append_question(self, question):
         self.questions.append(question)
 
 
-    def add_page_break(self):
+    def append_page_break(self):
         self.questions.append(PageBreak())
         
 
@@ -357,7 +287,6 @@ class _Question:
             question_data=self.data,
             block_id=block_id,
         )
-
 
 
 class TextGraphicQuestion(_Question):
@@ -784,7 +713,7 @@ class QualtricsSurveyDefinitionAPI:
     def update_flow(self, survey_id, flow_data):
         return self._put(
             endpoint=f"survey-definitions/{survey_id}/flow",
-            data=flows_data,
+            data=flow_data,
         )
 
     def update_flow_element(self, survey_id, flow_id, flow_element_data):

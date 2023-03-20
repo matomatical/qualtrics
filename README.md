@@ -78,8 +78,8 @@ Create a survey with a single text question with text "Hello, world!".
 import qualtrics as qq
 
 # build the survey data structure
-survey = qq.Survey(name="Test Survey")
-survey.add_question(qq.TextGraphicQuestion(text_html="Hello, world!"))
+survey = qq.BasicSurvey(name="Test Survey")
+survey.append_question(qq.TextGraphicQuestion(text_html="Hello, world!"))
 
 # use the API to create the survey within your Qualtrics account
 api = qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER)
@@ -94,14 +94,14 @@ breaks:
 import qualtrics as qq
 
 # build the survey data structure
-survey = qq.Survey(name="Test Survey")
+survey = qq.BlockSurvey(name="Test Survey")
 for i in range(3):
-    block = survey.add_block(qq.Block())
+    block = survey.append_block(qq.Block())
     for j in range(4):
-        block.add_question(qq.TextGraphicQuestion(
+        block.append_question(qq.TextGraphicQuestion(
             text_html=f"Block {i}, question {j}",
         ))
-        block.add_page_break()
+        block.append_page_break()
 
 # upload the survey to Qualtrics
 api = qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER)
@@ -115,7 +115,7 @@ constructor:
 ```python
 import qualtrics as qq
 
-qq.Survey(
+qq.BlockSurvey(
     name="Test Survey",
     blocks=[
         qq.Block(questions=[
@@ -130,6 +130,9 @@ qq.Survey(
     ]
 ).create(qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER))
 ```
+
+TODO: Document differences between `BasicSurvey`, `BlockSurvey`, and
+`FlowSurvey`.
 
 
 Most question types allow a `script_js` parameter, which is a string that
