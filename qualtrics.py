@@ -115,8 +115,9 @@ class FlowSurvey(_Survey):
         self.elements = list(elements)
 
     
-    def append_element(self, element):
-        self.elements.append(element)
+    def append_flow(self, flow):
+        self.elements.append(flow)
+        return flow
 
 
     def create(self, api):
@@ -158,8 +159,16 @@ class _FlowElement:
         self.children = list(children)
         self.kwargs = kwargs
 
-    def append_child(self, child):
-        self.children.append(child)
+
+    def append_flow(self, flow):
+        self.children.append(flow)
+        return flow
+
+
+    def append_block(self, block):
+        self.append_flow(BlockFlow(block))
+        return block
+
 
     def compile(self, flow_id, block_id_map):
         """
@@ -185,9 +194,11 @@ class _FlowElement:
             child_data, flow_id = child.compile(flow_id + 1, block_id_map)
             children_data.append(child_data)
         # put it together (if there are children)
-        if children_data: data['Flow'] = children_data
+        if children_data:
+            data['Flow'] = children_data
         # return
         return data, flow_id
+
 
     def get_block_flows(self):
         for child in self.children:
@@ -199,6 +210,7 @@ class BlockFlow(_FlowElement):
     def __init__(self, block):
         self.block = block
 
+
     def compile(self, flow_id, block_id_map):
         # element data
         return {
@@ -208,6 +220,7 @@ class BlockFlow(_FlowElement):
             'Autofill': [],
         }, flow_id
     
+
     def get_block_flows(self):
         yield self
     
@@ -220,6 +233,7 @@ class RootFlow(_FlowElement):
             Type='Root',
         )
     
+
     def flow_data(self, block_id_map):
         data, max_id = self.compile(flow_id=1, block_id_map=block_id_map)
         data['Properties'] = {
@@ -254,6 +268,11 @@ class EndSurveyFlow(_FlowElement):
 
     def __init__(self):
         super().__init__(Type="EndSurvey")
+    
+
+    def append_flow(self, flow):
+        raise Exception("this type of flow has no children")
+
 
 
 # # # BLOCKS
