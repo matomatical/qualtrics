@@ -73,6 +73,8 @@ determined per above instructions.
 
 
 Create a survey with a single text question with text "Hello, world!".
+The `BasicSurvey` class is appropriate for surveys with a single block of
+questions.
 
 ```python
 import qualtrics as qq
@@ -88,7 +90,8 @@ survey.create(api)
 
 
 Create a survey with three blocks of four questions each, separated by page
-breaks:
+breaks. The `BlockSurvey` class is appropriate for surveys with multiple
+blocks, presented one after another:
 
 ```python
 import qualtrics as qq
@@ -108,9 +111,8 @@ api = qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER)
 survey.create(api)
 ```
 
-
-Alternatively, provide the questions and blocks to the survey via the
-constructor:
+Alternatively, provide the questions and blocks to the survey directly
+via the survey constructor:
 
 ```python
 import qualtrics as qq
@@ -131,8 +133,27 @@ qq.BlockSurvey(
 ).create(qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER))
 ```
 
-TODO: Document differences between `BasicSurvey`, `BlockSurvey`, and
-`FlowSurvey`.
+
+Create a survey with a more complex flow, for example randomly presenting one
+of three blocks (arbitrary Qualtrics survey flows are also possible). For any
+survey with a non-standard flow, use the `FlowSurvey` class.
+
+```python
+import qualtrics as qq
+
+survey = qq.FlowSurvey(name="Test Survey")
+randomizer = survey.append_flow(qq.BlockRandomizerFlow(
+    n_samples=1,            # choose one of the child blocks
+    even_presentation=True, # balance between participants
+))
+for i in range(3):
+    block = randomizer.append_block(qq.Block())
+    for j in range(4):
+        block.append_question(qq.TextGraphicQuestion(f"Block {i}, question {j}"))
+
+survey.create(qq.QualtricsSurveyDefinitionsAPI(API_TOKEN, DATA_CENTER))
+```
+
 
 
 Most question types allow a `script_js` parameter, which is a string that

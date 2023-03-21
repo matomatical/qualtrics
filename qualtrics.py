@@ -274,7 +274,6 @@ class EndSurveyFlow(_FlowElement):
         raise Exception("this type of flow has no children")
 
 
-
 # # # BLOCKS
 
 
