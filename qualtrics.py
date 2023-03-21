@@ -300,6 +300,7 @@ class PageBreak:
 
 
 class _Question:
+
     def __init__(self, data):
         self.data = data
 
@@ -311,6 +312,101 @@ class _Question:
             block_id=block_id,
         )
 
+
+class MultipleChoiceQuestion(_Question):
+    def __init__(
+        self,
+        options=(),
+        text_html="",
+        script_js="",
+        force_response=False,
+        selection_method="button-list", # or "dropdown-list"
+        # TODO: randomisation?
+    ):
+        # convert string options into option objects
+        options = [
+            opt if isinstance(opt, _Option) else BasicOption(opt)
+            for opt in options
+        ]
+        if selection_method == "button-list":
+            selector = {'Selector': "SAVR", 'SubSelector': "TX"}
+        elif selection_method == "dropdown-list":
+            selector = {'Selector': "DL"}
+        else:
+            raise ValueError(f"unknown selection_method {selection_method!r}")
+        super().__init__(data=selector | {
+            'QuestionType': "MC",
+            'ChoiceOrder': list(range(1, len(options)+1)),
+            'Choices': {i: o.data for i, o in enumerate(options, start=1)},
+            'QuestionText': text_html,
+            'QuestionJS': script_js,
+            'Validation': {
+                'Settings': {
+                    'ForceResponse': "ON" if force_response else "OFF",
+                    'ForceResponseType': "ON",
+                    'Type': "None"
+                },
+            },
+            'Language': [],
+        })
+
+class _Option:
+    pass
+
+class BasicOption(_Option):
+    def __init__(self, label):
+        self.data = {
+            "Display": label,
+        }
+
+class TextOption(_Option):
+    def __init__(self, label):
+        self.data = {
+            "Display": label,
+            "TextEntry": "true", # Qualtrics expects this as a string for some reason...
+        }
+
+
+# TODO: MultipleAnswer version of multiple choice question?
+
+
+class TextEntryQuestion(_Question):
+    def __init__(
+        self,
+        data_export_tag,
+        text_html,
+        script_js="",
+        force_response=False,
+        size_of_response="single-line", # or "multi-line", or "essay"
+    ):
+        if size_of_response == "single-line":
+            selector = "SL"
+        elif size_of_response == "multi-line":
+            selector = "ML"
+        elif size_of_response == "essay":
+            selector = "ESTB"
+        else:
+            raise ValueError(f"unknown size_of_response {size_of_response!r}")
+
+        super().__init__(data={
+            'QuestionType': "TE",
+            'Selector': selector,
+            'DataExportTag': data_export_tag,
+            'QuestionText': text_html,
+            'QuestionJS': script_js,
+            'Validation': {
+                'Settings': {
+                    'ForceResponse': "ON" if force_response else "OFF",
+                    'ForceResponseType': "ON",
+                    'Type': "None"
+                },
+            },
+            'Language': [],
+            # unclear if needed?
+            # 'SearchSource': {"AllowFreeResponse": "false"}, # ?
+            # 'DefaultChoices': False,
+        })
+    
 
 class TextGraphicQuestion(_Question):
     def __init__(self, text_html, script_js=""):

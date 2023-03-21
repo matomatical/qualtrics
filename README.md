@@ -282,8 +282,9 @@ Questions (for a survey with a particular id)
   * Slider questions (configurable number and bounds of sliders)
   * Constant-sum questions with sliders (configurable number
     and bounds of sliders, configurable sum)
-  * TODO: Multiple choice, multiple answer, many various other question
-    types.
+  * Multiple choice questions (button and drop-down lists)
+  * Text-entry questions (single-line, multi-line, essay)
+  * TODO: Multiple answer, many various other question types.
   * See also: blocks (above) for appending page breaks, which are not
     technically questions, but can be mixed with questions in a block.
 
