@@ -316,6 +316,7 @@ class _Question:
 class MultipleChoiceQuestion(_Question):
     def __init__(
         self,
+        data_export_tag,
         options=(),
         text_html="",
         script_js="",
@@ -338,6 +339,7 @@ class MultipleChoiceQuestion(_Question):
             'QuestionType': "MC",
             'ChoiceOrder': list(range(1, len(options)+1)),
             'Choices': {i: o.data for i, o in enumerate(options, start=1)},
+            'DataExportTag': data_export_tag,
             'QuestionText': text_html,
             'QuestionJS': script_js,
             'Validation': {
@@ -368,6 +370,27 @@ class TextOption(_Option):
 
 
 # TODO: MultipleAnswer version of multiple choice question?
+
+
+class MatrixTableQuestion(_Question):
+    def __init__(
+        self,
+        data_export_tag, # ??
+        text_html,
+        script_js="",
+        options=(),
+        answers=(),
+    ):
+        # SEE: src/drafts/demographics.py (down the bottom) for an example
+        super().__init__(data={
+            'QuestionType': "Matrix",
+            'Selector': "Likert",
+            'SubSelector': "SingleAnswer",
+            # TODO: Choices and ChoiceOrder
+            # TODO: Answers and AnswerOrder
+            # TODO: Validation
+            # TODO: What is ChoiceDataExportTags? What is DefaultChoices?
+        })
 
 
 class TextEntryQuestion(_Question):
