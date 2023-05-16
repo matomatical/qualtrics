@@ -99,7 +99,7 @@ class BlockSurvey(_Survey):
         print(f"populating survey: {n_blocks} blocks, {n_questions} questions")
         progress = tqdm.tqdm(total=n_blocks+n_questions, dynamic_ncols=True)
         for block in self.blocks:
-            block_id = api.create_block(survey_id=survey_id)['BlockID']
+            block_id = api.create_block(survey_id=survey_id, block_description=block.description)['BlockID']
             progress.update()
             for question in block.questions:
                 question.create(api, survey_id, block_id=block_id)
@@ -279,9 +279,9 @@ class EndSurveyFlow(_FlowElement):
 
 class Block:
 
-    def __init__(self, questions=()):
+    def __init__(self, questions=(), description="Standard Question Block"):
         self.questions = list(questions)
-
+        self.description = description
 
     def append_question(self, question):
         self.questions.append(question)
@@ -332,10 +332,12 @@ class MultipleChoiceQuestion(_Question):
         if selection_method == "button-list":
             selector = {'Selector': "SAVR", 'SubSelector': "TX"}
         elif selection_method == "dropdown-list":
-            selector = {'Selector': "DL"}
+            selector = {'Selector': "DL", 'SubSelector': ""}
         else:
             raise ValueError(f"unknown selection_method {selection_method!r}")
-        super().__init__(data=selector | {
+        super().__init__(data={
+            'Selector': selector['Selector'],
+            'SubSelector': selector['SubSelector'],
             'QuestionType': "MC",
             'ChoiceOrder': list(range(1, len(options)+1)),
             'Choices': {i: o.data for i, o in enumerate(options, start=1)},
@@ -812,11 +814,11 @@ class QualtricsSurveyDefinitionAPI:
             endpoint=f"survey-definitions/{survey_id}/blocks/{block_id}",
         )
 
-    def create_block(self, survey_id):
+    def create_block(self, survey_id, block_description=""):
         return self._post(
             endpoint=f"survey-definitions/{survey_id}/blocks",
             data={
-                'Description': 'Standard Question Block',
+                'Description': block_description,
                 'Type': 'Standard',
             },
         )
