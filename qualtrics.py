@@ -24,10 +24,8 @@ class _Survey:
     def set_header_html(self, header_html=""):
         self.options['Header'] = header_html
 
-
     def set_footer_html(self, footer_html=""):
         self.options['Footer'] = footer_html
-
 
     def set_custom_css(self, custom_css=""):
         self.options['CustomStyles'] = {'customCSS': custom_css}
@@ -65,6 +63,7 @@ class BasicSurvey(_Survey):
 
     def append_question(self, question):
         self.questions.append(question)
+        return question
 
 
     def create(self, api):
@@ -89,6 +88,7 @@ class BlockSurvey(_Survey):
 
     def append_block(self, block):
         self.blocks.append(block)
+        return block
 
 
     def create(self, api):
