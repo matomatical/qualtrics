@@ -608,6 +608,11 @@ class QuestionJS:
         self.scripts.append(self._engine_wrap("load", script))
         return self
 
+    def on_click(self, script):
+        return self.on_load(f"""this.questionclick = function(event, element) {{
+            {script}
+        }};""");
+
     def on_ready(self, script):
         self.scripts.append(self._engine_wrap("Ready", script))
         return self
