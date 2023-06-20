@@ -99,12 +99,13 @@ import qualtrics as qq
 # build the survey data structure
 survey = qq.BlockSurvey(name="Test Survey")
 for i in range(3):
-    block = survey.append_block(qq.Block())
+    block = qq.Block()
     for j in range(4):
         block.append_question(qq.TextGraphicQuestion(
             text_html=f"Block {i}, question {j}",
         ))
         block.append_page_break()
+    survey.append_block(block)
 
 # upload the survey to Qualtrics
 api = qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER)
