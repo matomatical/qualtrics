@@ -215,6 +215,10 @@ It seems that an arbitrary number of chunks of code can be attached to each
 event (which is why I chose to use the builder pattern for this, rather than,
 say, a constructor with four optional arguments).
 
+(TODO: There is one more method now "on_click" which binds to anything
+clicking the qualtrics question div, see the examples in the JS
+documentation).
+
 
 Finally, one can make API calls directly, without wrapper classes. This
 includes methods for viewing, modifying, and deleting surveys from the
