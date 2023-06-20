@@ -322,13 +322,24 @@ class MultipleChoiceQuestion(_Question):
         script_js="",
         force_response=False,
         selection_method="button-list", # or "dropdown-list"
+        recode_values={},
         # TODO: randomisation?
     ):
         # convert string options into option objects
-        options = [
-            opt if isinstance(opt, _Option) else BasicOption(opt)
-            for opt in options
-        ]
+        # options = [
+        #     opt if isinstance(opt, _Option) else BasicOption(opt)
+        #     for opt in options
+        # ]
+
+        get_options = []
+        for opt in options:
+            if isinstance(opt, _Option):
+                get_options.append(opt)
+            elif opt == "Self-specified":
+                get_options.append(TextOption(opt))
+            else:
+                get_options.append(BasicOption(opt))
+
         if selection_method == "button-list":
             selector = {'Selector': "SAVR", 'SubSelector': "TX"}
         elif selection_method == "dropdown-list":
@@ -339,8 +350,8 @@ class MultipleChoiceQuestion(_Question):
             'Selector': selector['Selector'],
             'SubSelector': selector['SubSelector'],
             'QuestionType': "MC",
-            'ChoiceOrder': list(range(1, len(options)+1)),
-            'Choices': {i: o.data for i, o in enumerate(options, start=1)},
+            'ChoiceOrder': list(range(1, len(get_options)+1)),
+            'Choices': {i: o.data for i, o in enumerate(get_options, start=1)},
             'DataExportTag': data_export_tag,
             'QuestionText': text_html,
             'QuestionJS': script_js,
@@ -351,6 +362,7 @@ class MultipleChoiceQuestion(_Question):
                     'Type': "None"
                 },
             },
+            'RecodeValues': recode_values,
             'Language': [],
         })
 
@@ -752,7 +764,7 @@ class QualtricsSurveyDefinitionAPI:
     
     def partial_update_survey_options(self, survey_id, options_data):
         old_options_data = self.get_survey_options(survey_id=survey_id)
-        new_options_data = old_options_data | options_data
+        new_options_data = old_options_data | options_data['options']
         return self.update_survey_options(
             survey_id=survey_id,
             options_data=new_options_data,
@@ -875,6 +887,17 @@ class QualtricsSurveyDefinitionAPI:
     def link_to_preview_survey(self, survey_id):
         return f"{self.url}/jfe/preview/{survey_id}"
 
+
+class SurveyOptions:
+    def __init__(
+        self,
+        back_button = 'false',
+        progress_bar_display = "VerboseText",
+    ):
+        self.data = {
+            "BackButton": back_button,
+            "ProgressBarDisplay": progress_bar_display
+        }
 
 # # # RECIPES
 
