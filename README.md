@@ -2,256 +2,126 @@ Automating Qualtrics Survey Building with Python
 ================================================
 
 **qualtrics.py** is a simple Python library for scripting the creation of
-qualtrics surveys.
-It provides a convenient interface to the Qualtrics survey-definitions REST
-API.
+Qualtrics surveys. It provides a convenient interface to the Qualtrics
+survey-definitions REST API. See 'Concept' section below for more.
 
-The current goal of this library is **not** full coverage of the Qualtrics
-API, nor even of the survey-definitions API, nor even of all of the
-configuration options for the questions types it does cover.
-The goal is *just enough* coverage for me to be able to create the types of
-surveys I need with the configuration options I need.
+*Status: Minimally viable. Un-maintained.*
 
-However, the library and the API are pretty straight-forward, so it's pretty
-easy to extend the coverage as needed if you want to do that. Some notes on
-the API and tips for extending the library are included below, and PRs are
-welcome (try to follow a similar interface and provide good defaults for new
-options).
+Concept: Qualtrics Automation
+-----------------------------
 
-Status: Early draft.
+[Qualtrics](https://www.qualtrics.com/) is an online platform for designing
+and distributing surveys and collecting responses. The traditional way to
+build a Qualtrics survey is to use the survey builder web application.
+For simple, small surveys, this is fine.[^rant]
+However, in some cases, the web editor is not really sufficient.
 
-TODO:
+1.  **What if one wants to create a survey with *a lot* of questions?**
+    Maybe we want a survey with questions that have overlapping configurations
+    (such as shared text or options) or are replicated many times between survey
+    blocks (and/or different branches of the survey's flow).
+    There is some support for sharing questions between blocks (I think), but
+    this support is limited to exact question replication, so if questions
+    need to have subtle differences, then they need to be replicated fully.
+    
+    In this case, using the web editor has several issues:
 
-* [x] basic API wrapper for key question types
-* [x] class-based interface for more succinct survey building
-* [x] flows API and construction
-* [ ] documentation
-* [ ] more question types and configuration options
-* [ ] class-based interface for the return types of the other API methods,
-  not just creating fresh surveys?
+    * It takes an extremely long time to create and configure a large number
+      of questions because the editor is fairly slow and clunky.
+    * Creating a large number of questions manually is error-prone,
+      especially if questions contain intricate data, therefore further
+      time-intensive verification work is required (and there may still be
+      issues).
+    * If there are changes to the survey design after much of this work has
+      been completed, necessitating changes to a large number of questions,
+      then much of the work must be repeated (plus, one must additionally
+      worry about different parts of the survey getting out of sync).
 
-Note: This library is mainly for building surveys. It is not for
-downloading survey responses, though Qualtrics offers an API for that.
-See the [list of similar tools](#similar-tools).
+2.  **What if one wants to create a survey with *highly complex* questions?**
+    Perhaps the questions require a large amount of HTML and JavaScript, such
+    as for the inclusion of interactive widgets into the survey.
+    The Qualtrics web survey editor has a built-in source editor for adding
+    such source code. In principle, this can be used. However, there are
+    a few major issues that come up as the complexity of the code scales.
 
-Installation
-------------
+    * The source behind each question is hidden away in the question's
+      configuration, rather than front-and-center, making it a little awkward
+      to build surveys with a lot of questions from source.
+    * The web editor allows editing HTML or JavaScript, but does not have
+      the same level of useful features for editing source as a proper
+      native text editor or IDE.
+    * Let alone if one wants to generate HTML and/or JavaScript using a
+      transpiler or bundler of some kind: to get such code into the web
+      editor would require copying and pasting the built files into the
+      source fields manually.
+    * It is impossible to keep the state of the survey under proper version
+      control. (I'm not sure if Qualtrics surveys have some kind of version
+      control, actually, but if it does, it can't be of the same calibre as
+      a professional source versioning tool such as git).
 
-Python dependencies:
+One idea for addressing these issues is to shift from thinking about the
+Qualtrics web editor as a source editor to thinking about it as a compilation
+target. Building a Qualtrics survey becomes a two-level process:
 
-1. requests (`pip install requests`) for making the API calls.
-2. tqdm (`pip install tqdm`) for displaying progress bars (making many API
-  calls can take some time)---TODO: make this an optional dependency.
+1. Edit the 'source code' of a survey within a professional-grade development
+   environment (e.g., offline, with text-based files, under version control,
+   in a [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) manner,
+   potentially using higher-level languages than HTML and JavaScript, etc.).
 
+2. Automatically translate this survey 'source code', somehow, into a survey
+   proper on the Qualtrics platform.
 
-Installing the library:
+Lucky for us, Qualtrics provides a
+  [RESTful API for survey building](https://api.qualtrics.com/ZG9jOjg3NzY2Nw-building-surveys),
+which enables us to build a tool that implements (2).
 
-1. For now it's just a single script: copy or symlink **qualtrics.py** into
-   your project directory so that you can import it from your script.
+The present library provides such a tool. The library allows one to compose a
+survey with arbitrarily many arbitrarily complex questions in memory, and
+then the upload that survey to Qualtrics using the API.
 
+The contents of the questions can then be created with any means (such as
+directly in Python, or by using pandoc to generate question HTML from
+markdown, or by using a JavaScript bundler to generate question JS from a
+higher-level language or a codebase spread across multiple files and with
+various dependencies.
 
-Setup:
+There are some pretty rough edges, and setting up the above pipelines for
+very complex surveys can still be a bit messy. However, in my opinion it's
+already miles ahead of using the Qualtrics web editor.
 
-1. Get your API "token", by following
-   [these instructions](https://api.qualtrics.com/ZG9jOjg3NjYzMg-api-key-authentication).
-   Keep the token safe, it allows anyone to access your Qualtrics account and
-   all of the data within it.
-2. Get your "data center ID" by following
-   [these instructions](https://api.qualtrics.com/ZG9jOjg3NjYzMw-base-url-and-datacenter-i-ds).
-   Actually, I found that in my case using the brand base URL prefix
-   (`melbourneuni.au1` for me) also works and is slightly more convenient.
+Have fun!
 
-This library will require your API token and data center ID to make API calls
-on your behalf.
-
-
-Quick start
------------
-
-In the following examples, `API_TOKEN` and `DATA_CENTER` contain strings
-determined per above instructions.
-
-
-Create a survey with a single text question with text "Hello, world!".
-The `BasicSurvey` class is appropriate for surveys with a single block of
-questions.
-
-```python
-import qualtrics as qq
-
-# build the survey data structure
-survey = qq.BasicSurvey(name="Test Survey")
-survey.append_question(qq.TextGraphicQuestion(text_html="Hello, world!"))
-
-# use the API to create the survey within your Qualtrics account
-api = qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER)
-survey.create(api)
-```
-
-
-Create a survey with three blocks of four questions each, separated by page
-breaks. The `BlockSurvey` class is appropriate for surveys with multiple
-blocks, presented one after another:
-
-```python
-import qualtrics as qq
-
-# build the survey data structure
-survey = qq.BlockSurvey(name="Test Survey")
-for i in range(3):
-    block = survey.append_block(qq.Block())
-    for j in range(4):
-        block.append_question(qq.TextGraphicQuestion(
-            text_html=f"Block {i}, question {j}",
-        ))
-        block.append_page_break()
-
-# upload the survey to Qualtrics
-api = qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER)
-survey.create(api)
-```
-
-Alternatively, provide the questions and blocks to the survey directly
-via the survey constructor:
-
-```python
-import qualtrics as qq
-
-qq.BlockSurvey(
-    name="Test Survey",
-    blocks=[
-        qq.Block(questions=[
-            q
-            for j in range(4)
-            for q in (
-                qq.TextGraphicQuestion(text_html=f"Block {i}, question{j}"),
-                qq.PageBreak()
-            ) 
-        ])
-        for i in range(3)
-    ]
-).create(qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER))
-```
-
-
-Create a survey with a more complex flow, for example randomly presenting one
-of three blocks (arbitrary Qualtrics survey flows are also possible). For any
-survey with a non-standard flow, use the `FlowSurvey` class.
-
-```python
-import qualtrics as qq
-
-survey = qq.FlowSurvey(name="Test Survey")
-randomizer = survey.append_flow(qq.BlockRandomizerFlow(
-    n_samples=1,            # choose one of the child blocks
-    even_presentation=True, # balance between participants
-))
-for i in range(3):
-    block = randomizer.append_block(qq.Block())
-    for j in range(4):
-        block.append_question(qq.TextGraphicQuestion(f"Block {i}, question {j}"))
-
-survey.create(qq.QualtricsSurveyDefinitionsAPI(API_TOKEN, DATA_CENTER))
-```
-
-
-
-Most question types allow a `script_js` parameter, which is a string that
-becomes JavaScript code attached to the question. The supported JS functions
-are those from the Qualtrics JavaScript Question API,
-  [documented here](https://api.qualtrics.com/82bd4d5c331f1-qualtrics-java-script-question-api-class).
-The most common usage is to attach code that runs on page load, on page
-ready, on page submission[^submit], and on page unloading. Attach a script such as
-the following (based on the default code from the web editor).
-
-[^submit]: Note that page submission triggers each time the user presses the
-  submit button for the page, even if, for example, the validation fails
-  because of some missing answers, and they end up staying on the page... so
-  this code might run multiple times!
-
-```python
-TextGraphicQuestion(
-    text_html="<p>Hello, world!</p>",
-    script_js="""// js
-        Qualtrics.SurveyEngine.addOnload(function() {
-            console.log("loaded!");
-        });
-        Qualtrics.SurveyEngine.addOnReady(function() {
-            console.log("ready!");
-        });
-        Qualtrics.SurveyEngine.addOnReady(function() {
-            console.log("ready again!");
-        });
-        Qualtrics.SurveyEngine.addOnPageSubmit(function() {
-            console.log("submitting!");
-        });
-        Qualtrics.SurveyEngine.addOnUnload(function() {
-            console.log("unloaded!");
-        });
-    """,
-)
-```
-
-To make constructing this string a little easier, this library provides a
-builder class `QuestionJS` that automatically wraps the added js code in the
-necessary method calls. Thus the following example is equivalent to the
-above:
-
-```python
-TextGraphicQuestion(
-    text_html="<p>Hello, world!</p>",
-    script_js=QuestionJS() # builder pattern
-        .on_load('console.log("loaded!");')
-        .on_ready('console.log("ready!");')
-        .on_ready('console.log("ready! again!");')
-        .on_submit('console.log("submitting!");')
-        .on_unload('console.log("unloaded!");')
-        .script(), # always call .script() (converts to str) 
-)
-```
-
-It seems that an arbitrary number of chunks of code can be attached to each
-event (which is why I chose to use the builder pattern for this, rather than,
-say, a constructor with four optional arguments).
-
-(TODO: There is one more method now "on_click" which binds to anything
-clicking the qualtrics question div, see the examples in the JS
-documentation).
-
-
-Finally, one can make API calls directly, without wrapper classes. This
-includes methods for viewing, modifying, and deleting surveys from the
-Qualtrics account. For example, one useful pattern is to start the script by
-removing the survey(s) created in previous runs.
-
-```python
-import qualtrics as qq
-import tqdm                 # `pip install tqdm`
-
-api = qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER)
-
-# find all surveys
-surveys = api.list_surveys()['elements']
-print("found", len(surveys), "surveys total")
-
-# filter for matching surveys
-surveys = [s for s in surveys if s['name'] == "Test Survey"]
-print("found", len(surveys), "surveys with name 'Test Survey'")
-
-# delete these surveys
-for survey in tqdm.tqdm(surveys):
-    api.delete_survey(survey['id'])
-
-```
-
-This pattern is actually already provided as a library function:
-`qq.delete_all_surveys_by_name(api, survey_name)`.
-
+[^rant]: Actually, since you asked: let me rant a bit. I have to use
+  Qualtrics for a project at work. I don't like Qualtrics, or it's web-based
+  survey editor.
+  The editor and the surveys generated are slow and clunky---somehow in a way
+  that seems worse than the majority of other bloated webware out there.
+  I maintain that I don't see why it has to be this way.
+  But then again, I'm a bit of a curmudgeon for web stuff generally (my
+  personal website uses hand-made CSS, to give you a flavor).
+  Anyway, at least Qualtrics developers have had the decency to offer a
+  partially-documented API for building surveys programmatically, and I've
+  been able to build this library as a way to avoid using their web editor
+  almost entirely. So, thanks I guess.
 
 Features
 --------
 
-(TODO: proper documentation)
+Just to clarify, let me start with a list of *non-features*:
+
+* Not aiming for coverage of Qualtrics API other than survey-definitions
+  (e.g. for downloading survey responses or managing participants).
+  * See the [list of related tools](#related-tools) for help there.
+* Nor even full coverage of the Qualtrics survey-definitions API, nor even of
+  all of the configuration options for the questions types it does cover
+
+The goal is *just enough* coverage for me to be able to create the types of
+surveys I need with the configuration options I need.
+
+However, the library and the API are pretty straight-forward, so it should be
+pretty easy to extend the coverage as needed if you want to do that.
+
+---
 
 **Survey Definitions API**
 
@@ -298,89 +168,83 @@ Flows
 * update the survey's flowchart
 * convenient classes for building certain types of flow elements
 
-Notes
+> WARNING: This list may be a little out of date.
+
+Installation
+------------
+
+Python dependencies:
+
+1. requests (`pip install requests`) for making the API calls.
+2. tqdm (`pip install tqdm`) for displaying progress bars (making many API
+  calls can take some time)---TODO: make this an optional dependency.
+
+
+Installing the library:
+
+1. For now it's just a single script: copy or symlink **qualtrics.py** into
+   your project directory so that you can import it from your script.
+
+Setup:
+
+1. Get your API "token", by following
+   [these instructions](https://api.qualtrics.com/ZG9jOjg3NjYzMg-api-key-authentication).
+   Keep the token safe, it allows anyone to access your Qualtrics account and
+   all of the data within it.
+2. Get your "data center ID" by following
+   [these instructions](https://api.qualtrics.com/ZG9jOjg3NjYzMw-base-url-and-datacenter-i-ds).
+   Actually, I found that in my case using the brand base URL prefix
+   (`melbourneuni.au1` for me) also works and is slightly more convenient.
+
+This library will require your API token and data center ID to make API calls
+on your behalf.
+
+> NOTE: If you are from the University of Melbourne, make sure you log into
+> Qualtrics with your staff account, rather than your student account. I
+> heard the student API keys don't work in later steps.
+
+Usage
 -----
 
-**How can I find out about the Qualtrics survey builder API?**
+A script to create a dead-simple survey is as follows:
 
-The qualtrics API documentation has an overview of the survey-builder API,
-and information about each of the available methods:
+```python
+import qualtrics as qq
 
-* https://api.qualtrics.com/ZG9jOjg3NzY2Nw-building-surveys
-* https://api.qualtrics.com/ZG9jOjg3NzY4Mg-survey-api-introduction
-* https://api.qualtrics.com/60d24f6897737-qualtrics-survey-api
+# build the survey data structure
+survey = qq.BasicSurvey(name="Test Survey")
+for i in range(3):
+      survey.append_question(qq.TextGraphicQuestion(
+          text_html=f"question {j}",
+      ))
 
-The last link is the full reference. Unfortunately, not all of the methods
-appear to be documented accurately, so some trial and error is necessary to
-figure out which fields are needed and how to achieve certain modifications.
+# upload the survey to Qualtrics
+api = qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER) # see 'setup'
+survey.create(api)
+```
 
-To get started, see this tutorial:
+For more usage examples and advice see the [guide](GUIDE.md).
 
-* https://api.qualtrics.com/ZG9jOjg3NzY4Mw-example-use-cases-walkthrough
+For complete information on available functions: TODO.
 
-**How can I learn more about the required data format, for surveys or
-for questions?**
+Contributing
+------------
 
-Create a survey with the required format in the editor. Then use the API to
-'get' the survey or question and see what the JSON looks like. Try creating a
-new survey or question based on that JSON, possibly using trial and error
-to discover which fields are really necessary to include in the posted data.
+This project is not currently maintained. Issues and PRs will be infrequently
+monitored if/when I have time.
 
+If you want to contribute substantially, I advise you fork the project and
+take it in the direction you like.
 
-**How can I add JS to questions?**
-
-I don't seem to be able to update or partial-update with QuestionJS field,
-but I can totally create new questions with this field, so we're good to go.
-
-
-**How can I add JS to surveys?**
-
-It doesn't appear possible to configure the survey while creating it.
-
-Yes, OK, to configure a survey uses a separate API call after the survey has
-been created (survey-builder/{survey_id}/options or something).
-
-That path appears to let you customise the CSS and a HTML Header and Footer
-for the survey page. These HTML scripts can contain arbitrary JS via script
-tags, so that's how we can get global JS.
-
-
-**How can I organise questions using blocks?**
-
-Things that work:
-
-* creating empty blocks (BlockElements removed or set to []) THEN creating
-  questions with an optional parameter that specifies the block ID of the
-  block you actually want them to join.
-* creating a question without a block ID parameter puts it in the default
-  block. For surveys with a single block, this is all you need.
-
-Things that don't work:
-
-* creating a block with BlockElements containing questions that don't exist
-* creating a block with BlockElements containing questions that do exist, but
-  are already in the default block
-* creating questions and then deleting the default block
-* even creating questions (in the default block) and then updating the
-  BlockElements of the default block to remove them, and then trying to add
-  them back to the blockelements in a new block being created? the questions
-  do remain in the survey, though.
-* providing "ReferencedBlockID" while creating the block (this must
-  do something else, perhaps to do with flow? It's not clear from the docs)
-
-Things that might work, haven't tried (only need one thing that works!):
-
-* creating an empty block and then editing questions out of the old block's
-  element list and then back into the new block's element list?
-
-
-Similar tools
+Related tools
 -------------
 
-I haven't found anything that provides a convenient way to automate
-survey *building*, though there are a few substantial tools that
-automate other parts of the qualtrics API. Here are some I noticed
-based on a quick github search for 'qualtrics':
+I haven't found anything that provides a convenient way to automate survey
+*building* (hence making this).
+
+However, there are a few substantial tools that appear to automate other
+parts of the qualtrics API. Here are some I noticed based on a quick github
+search for 'qualtrics':
 
 Python:
 
@@ -402,9 +266,12 @@ PHP:
 
 * https://github.com/UI-Research/qualtrics-api-php
 
+---
+
 Other links to explore later:
 
 * A guide to the Qualtrics Survey File format:
   https://gist.github.com/ctesta01/d4255959dace01431fb90618d1e8c241
 * Related R project https://github.com/sumtxt/qsf
 * Some more of the qualtrics documentation...
+
