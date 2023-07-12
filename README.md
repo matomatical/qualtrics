@@ -7,6 +7,11 @@ survey-definitions REST API. See 'Concept' section below for more.
 
 *Status: Minimally viable. Un-maintained.*
 
+This README contains a conceptual introduction, installation instructions,
+a partial list of features, and some other notes.
+
+For usage examples and advice see the [guide](GUIDE.md).
+
 Concept: Qualtrics Automation
 -----------------------------
 
@@ -203,8 +208,8 @@ on your behalf.
 > Qualtrics with your staff account, rather than your student account. I
 > heard the student API keys don't work in later steps.
 
-Usage
------
+Quick start
+-----------
 
 A script to create a dead-simple survey is as follows:
 
