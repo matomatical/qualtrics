@@ -112,23 +112,21 @@ Have fun!
 Features
 --------
 
-Just to clarify, let me start with a list of *non-features*:
+> To be clear: Let me start with a list of *non-features*:
+> 
+> * Not aiming for coverage of Qualtrics API other than survey-definitions
+>   (e.g. for downloading survey responses or managing participants).
+>   * See the [list of related tools](#related-tools) for help there.
+> * Nor even full coverage of the Qualtrics survey-definitions API, nor even of
+>   all of the configuration options for the questions types it does cover
+> 
+> The goal is *just enough* coverage for me to be able to create the types of
+> surveys I need with the configuration options I need.
+> 
+> However, the library and the API are pretty straight-forward, so it should be
+> pretty easy to extend the coverage as needed if you want to do that.
 
-* Not aiming for coverage of Qualtrics API other than survey-definitions
-  (e.g. for downloading survey responses or managing participants).
-  * See the [list of related tools](#related-tools) for help there.
-* Nor even full coverage of the Qualtrics survey-definitions API, nor even of
-  all of the configuration options for the questions types it does cover
-
-The goal is *just enough* coverage for me to be able to create the types of
-surveys I need with the configuration options I need.
-
-However, the library and the API are pretty straight-forward, so it should be
-pretty easy to extend the coverage as needed if you want to do that.
-
----
-
-**Survey Definitions API**
+### API coverage
 
 Surveys
  
@@ -156,16 +154,6 @@ Questions (for a survey with a particular id)
 
 * Append questions of various kinds to a survey's default block, or a
   particular block
-  * Text/graphics questions (including customisable HTML and JS)
-  * Timing questions
-  * Slider questions (configurable number and bounds of sliders)
-  * Constant-sum questions with sliders (configurable number
-    and bounds of sliders, configurable sum)
-  * Multiple choice questions (button and drop-down lists)
-  * Text-entry questions (single-line, multi-line, essay)
-  * TODO: Multiple answer, many various other question types.
-  * See also: blocks (above) for appending page breaks, which are not
-    technically questions, but can be mixed with questions in a block.
 
 Flows
 
@@ -173,7 +161,29 @@ Flows
 * update the survey's flowchart
 * convenient classes for building certain types of flow elements
 
-> WARNING: This list may be a little out of date.
+### Question types
+
+Question types supported (a convenient class is implemented making it easy to
+add such questions---all other questions can be uploaded with raw JSON but
+this requires investigating the required format + some trial-and-error).
+
+* Text/graphics questions (including customisable HTML and JS)
+* Timing questions
+* Slider questions (configurable number and bounds of sliders)
+* Constant-sum questions with sliders (configurable number
+  and bounds of sliders, configurable sum)
+* Multiple choice questions (button and drop-down lists)
+* Text-entry questions (single-line, multi-line, essay)
+* TODO: Multiple answer, many various other question types.
+* See also: blocks (above) for appending page breaks, which are not
+  technically questions, but can be mixed with questions in a block.
+
+### Error handling
+
+There is no automatic error handling.
+
+Sometimes, the qualtrics API calls will seize up. I don't know why. If the
+progress bars are stuck for a while, just quit and start again.
 
 Installation
 ------------
