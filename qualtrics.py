@@ -12,7 +12,7 @@ import tqdm         # TODO: remove/make optional dependency
 
 class _Survey:
 
-    def __init__(self, name, **options):
+    def __init__(self, name, options):
         self.name = name
         self.options = options
 
@@ -56,8 +56,8 @@ class _Survey:
 
 class BasicSurvey(_Survey):
 
-    def __init__(self, name, questions=(), **options):
-        super().__init__(name, **options)
+    def __init__(self, name, questions=(), options={}):
+        super().__init__(name, options)
         self.questions = list(questions)
 
 
@@ -81,8 +81,8 @@ class BasicSurvey(_Survey):
 
 class BlockSurvey(_Survey):
 
-    def __init__(self, name, blocks=(), **options):
-        super().__init__(name, **options)
+    def __init__(self, name, blocks=(), options={}):
+        super().__init__(name, options)
         self.blocks = list(blocks)
 
 
@@ -110,8 +110,8 @@ class BlockSurvey(_Survey):
 
 class FlowSurvey(_Survey):
 
-    def __init__(self, name, elements=(), **options):
-        super().__init__(name, **options)
+    def __init__(self, name, elements=(), options={}):
+        super().__init__(name, options)
         self.elements = list(elements)
 
     
@@ -769,7 +769,7 @@ class QualtricsSurveyDefinitionAPI:
     
     def partial_update_survey_options(self, survey_id, options_data):
         old_options_data = self.get_survey_options(survey_id=survey_id)
-        new_options_data = old_options_data | options_data['options']
+        new_options_data = old_options_data | options_data
         return self.update_survey_options(
             survey_id=survey_id,
             options_data=new_options_data,
