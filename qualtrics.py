@@ -15,20 +15,14 @@ import os
 import sys
 import json
 
+# mandatory dependency
 import requests
+    
+# optional dependency
 try:
-    from tqdm import tqdm
+    import tqdm
 except ImportError:
-    # mock progress bar with the features I use (hacky)
-    def tqdm(*args, **kwargs):
-        print("[qualtrics.py] install tqdm for live progress bar here", file=sys.stderr)
-        if len(args):
-            bar = args[0]
-        else:
-            def bar(): pass
-            bar.update = lambda *x, **y: None
-        return bar
-    tqdm.write = print
+    import notqdm as tqdm
 
 
 # # # SURVEYS
