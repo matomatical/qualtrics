@@ -1,11 +1,34 @@
-# # # # QUALTRICS SURVEY BUILDER TOOLS
+"""
+Qualtrics Survey Builder
+========================
+
+**qualtrics.py** is a simple Python library for scripting the creation of
+Qualtrics surveys. It provides convenient wrapper methods for accessing the
+Qualtrics survey-definitions REST API, along with a convenient object-oriented
+interface for building virtual surveys to load through that API.
+
+See 'README.md' for a more detailed overview.
+
+"""
 
 import os
 import sys
 import json
 
 import requests
-import tqdm         # TODO: remove/make optional dependency
+try:
+    from tqdm import tqdm
+except ImportError:
+    # mock progress bar with the features I use (hacky)
+    def tqdm(*args, **kwargs):
+        print("[qualtrics.py] install tqdm for live progress bar here", file=sys.stderr)
+        if len(args):
+            bar = args[0]
+        else:
+            def bar(): pass
+            bar.update = lambda *x, **y: None
+        return bar
+    tqdm.write = print
 
 
 # # # SURVEYS
@@ -71,7 +94,7 @@ class BasicSurvey(_Survey):
         
         n_questions = len(self.questions)
         print(f"populating survey: {n_questions} questions")
-        progress = tqdm.tqdm(total=n_questions, dynamic_ncols=True)
+        progress = tqdm(total=n_questions, dynamic_ncols=True)
         for question in self.questions:
             question.create(api, survey_id, block_id=None) # default block
             progress.update()
@@ -97,7 +120,7 @@ class BlockSurvey(_Survey):
         n_blocks = len(self.blocks)
         n_questions = sum(len(b.questions) for b in self.blocks)
         print(f"populating survey: {n_blocks} blocks, {n_questions} questions")
-        progress = tqdm.tqdm(total=n_blocks+n_questions, dynamic_ncols=True)
+        progress = tqdm(total=n_blocks+n_questions, dynamic_ncols=True)
         for block in self.blocks:
             block_id = api.create_block(survey_id=survey_id, block_description=block.description)['BlockID']
             progress.update()
@@ -131,7 +154,7 @@ class FlowSurvey(_Survey):
         n_blocks = len(block_ids)
         n_questions = sum(len(b.questions) for b in block_ids)
         print(f"populating survey: {n_blocks} blocks, {n_questions} questions")
-        progress = tqdm.tqdm(total=n_blocks+n_questions, dynamic_ncols=True)
+        progress = tqdm(total=n_blocks+n_questions, dynamic_ncols=True)
         for block in block_ids:
             block_id = api.create_block(survey_id=survey_id)['BlockID']
             block_ids[block] = block_id
@@ -926,15 +949,15 @@ def delete_all_surveys_by_name(
         return
     
     print("deleting these surveys...")
-    for survey in tqdm.tqdm(surveys):
+    for survey in tqdm(surveys):
         survey_id = survey["id"]
         if print_surveys or save_surveys:
             survey = api.get_survey(survey_id)
             if print_surveys:
-                tqdm.tqdm.write(json.dumps(survey, indent=2))
+                tqdm.write(json.dumps(survey, indent=2))
             if save_surveys:
                 path = os.path.join(save_surveys, f"{survey_id}.json")
-                tqdm.tqdm.write(f"saving survey {survey_id} to {path}")
+                tqdm.write(f"saving survey {survey_id} to {path}")
                 with open(path, 'w') as fp:
                     json.dump(survey, fp, indent=2)
         api.delete_survey(survey_id, warn=False) # already warned above

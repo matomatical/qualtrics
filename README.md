@@ -2,18 +2,28 @@ Automating Qualtrics Survey Building with Python
 ================================================
 
 **qualtrics.py** is a simple Python library for scripting the creation of
-Qualtrics surveys. It provides a convenient interface to the Qualtrics
-survey-definitions REST API. See 'Concept' section below for more.
+Qualtrics surveys. It provides convenient wrapper methods for accessing the
+Qualtrics survey-definitions REST API, along with a convenient object-oriented
+interface for building virtual surveys to load through that API.
+See 'Concept' section below for more.
 
 *Status: Minimally viable. Un-maintained.*
 
-This README contains a conceptual introduction, installation instructions,
-a partial list of features, and some other notes.
+Contents:
 
-For usage examples and advice see the [guide](GUIDE.md).
+1. Concept: Qualtrics Automation---high level library overview.
+2. Features
+   * an incomplete list of API routes and survey features covered.
+   * pointers for people who want to extend the library
+3. Quick Start:
+   * instructions to get this library installed.
+   * instructions to get your API keys and routes.
+   * instructions to compile a hello-world survey.
+   * for more examples and advice, see the [guide](GUIDE.md).
+4. Related tools---pointers to other Qualtrics-related code projects.
 
-Concept: Qualtrics Automation
------------------------------
+1. Concept: Qualtrics Automation
+--------------------------------
 
 [Qualtrics](https://www.qualtrics.com/) is an online platform for designing
 and distributing surveys and collecting responses. The traditional way to
@@ -109,8 +119,8 @@ Have fun!
   been able to build this library as a way to avoid using their web editor
   almost entirely. So, thanks I guess.
 
-Features
---------
+2. Features
+-----------
 
 > To be clear: Let me start with a list of *non-features*:
 > 
@@ -185,22 +195,34 @@ There is no automatic error handling.
 Sometimes, the qualtrics API calls will seize up. I don't know why. If the
 progress bars are stuck for a while, just quit and start again.
 
-Installation
-------------
+### Contributing
+
+This project is not currently maintained. Issues and PRs will be infrequently
+monitored if/when I have time.
+
+If you want to contribute substantially, I advise you fork the project and
+take it in the direction you like.
+
+
+3. Quick start
+--------------
+
+### Installation
 
 Python dependencies:
 
 1. requests (`pip install requests`) for making the API calls.
 2. tqdm (`pip install tqdm`) for displaying progress bars (making many API
-  calls can take some time)---TODO: make this an optional dependency.
-
+  calls can take some time)
+  * This dependency is optional but the code to make surveys without it has
+    not been thoroughly tested and might break
 
 Installing the library:
 
 1. For now it's just a single script: copy or symlink **qualtrics.py** into
    your project directory so that you can import it from your script.
 
-Setup:
+### Get your keys
 
 1. Get your API "token", by following
    [these instructions](https://api.qualtrics.com/ZG9jOjg3NjYzMg-api-key-authentication).
@@ -218,10 +240,9 @@ on your behalf.
 > Qualtrics with your staff account, rather than your student account. I
 > heard the student API keys don't work in later steps.
 
-Quick start
------------
+### Hello, world!
 
-A script to create a dead-simple survey is as follows:
+From there, a script to create a dead-simple survey is as follows:
 
 ```python
 import qualtrics as qq
@@ -234,25 +255,19 @@ for i in range(3):
       ))
 
 # upload the survey to Qualtrics
-api = qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER) # see 'setup'
+# see 'Get your keys' above for API_TOKEN and DATA_CENTER
+api = qq.QualtricsSurveyDefinitionAPI(API_TOKEN, DATA_CENTER)
 survey.create(api)
 ```
+
+### More information
 
 For more usage examples and advice see the [guide](GUIDE.md).
 
 For complete information on available functions: TODO.
 
-Contributing
-------------
-
-This project is not currently maintained. Issues and PRs will be infrequently
-monitored if/when I have time.
-
-If you want to contribute substantially, I advise you fork the project and
-take it in the direction you like.
-
-Related tools
--------------
+4. Related tools
+----------------
 
 I haven't found anything that provides a convenient way to automate survey
 *building* (hence making this).

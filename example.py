@@ -41,3 +41,5 @@ for i in range(NUM_BLOCKS):
 
         block.append_page_break()
     survey.append_block(block)
+
+survey.create(api)
