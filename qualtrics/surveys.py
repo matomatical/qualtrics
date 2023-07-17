@@ -16,6 +16,7 @@ except ImportError:
     import qualtrics.notqdm as tqdm
 
 from qualtrics.flows import RootFlow
+from qualtrics.questions import PageBreak
 
 
 class _Survey:

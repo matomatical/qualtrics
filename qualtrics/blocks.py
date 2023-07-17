@@ -11,6 +11,9 @@ survey using API calls.
 """
 
 
+from qualtrics.questions import PageBreak
+
+
 class Block:
     """
     Class representing a vrtual block of questions, as part of a block-based
