@@ -7,18 +7,32 @@ Qualtrics surveys. It provides convenient wrapper methods for accessing the
 Qualtrics survey-definitions REST API, along with a convenient object-oriented
 interface for building virtual surveys to load through that API.
 
-See 'README.md' for a more detailed overview.
-
+See README for a more detailed overview.
 """
+
+
+# # # CONVENTIONS
+# In my editor I use simple expression-based code-folding that folds on a
+# double line break. That's why conceptual blocks (e.g. imports, section
+# titles, class definitions, class methods, functions) are mostly separated
+# with double line breaks, and code within blocks has at most single line
+# breaks.
+# 
+# Oh, and I use a thin editor too, so I try to keep lines <80 characters
+# wide. Thanks in advance.
+#                                                                       ~Matt
+
+
+# # # IMPORTS
 
 import os
 import sys
 import json
 
-# mandatory dependency
+# mandatory dependencies
 import requests
     
-# optional dependency
+# optional dependencies
 try:
     import tqdm
 except ImportError:
@@ -26,6 +40,7 @@ except ImportError:
 
 
 # # # SURVEYS
+
 
 class _Survey:
     """
@@ -35,6 +50,7 @@ class _Survey:
 
     * Stores survey name and global survey options (such as Header HTML and
       CSS) provided at construction time or through methods.
+
     * The create method uses a Survey Builder API connection to create a real
       survey and upload these options to it.
 
@@ -45,9 +61,11 @@ class _Survey:
 
     * Subclasses should remember to call this class's constructor and
       pass along any options provided at constructor time.
+
     * Subclasses overriding the 'create' method should probably start with a
       call to this class's create method to avoid having to repeat that code.
     """
+
 
     def __init__(self, name="Test Survey", options={}, **kw_options):
         """
@@ -55,21 +73,29 @@ class _Survey:
 
         Parameters:
 
-        * `name` (str): The survey name.
-          * Default: 'Test Survey' (conventional during survey development)
-        * `options` (dict): A dictionary of survey options.
+        * `name` (str):
+          The survey name.
+          Default: 'Test Survey' (conventional during survey development)
+
+        * `options` (dict):
+          A dictionary of survey options.
           The format is based on the survey definitions API. If you are
           unfamiliar with this format, it may be best to use the helper
           methods for configuring particular options---they are individually
           documented.
-          * Default: empty dictionary.
-        * `**kw_options`: Further options may be provided as keyword
-          arguments.
-          * If a key appears in both `options` and `kw_options`, the latter's
-            value is used.
+          Default: empty dictionary.
+        
+        * `**kw_options`:
+          Further options may be provided as keyword arguments.
+        
+        Notes:
+
+        * If a key appears in both `options` and `kw_options`, the latter's
+          value is used.
         """
         self.name = name
         self.options = options | kw_options
+
 
     def set_name(self, name):
         """
@@ -81,35 +107,41 @@ class _Survey:
         """
         self.name = name
 
+
     def set_options(self, options={}, **kw_options):
         """
         Update the survey options with new options.
 
         Parameters:
 
-        * `options` (dict): A dictionary of survey options.
+        * `options` (dict):
+          A dictionary of survey options.
           The format is based on the survey definitions API. If you are
           unfamiliar with this format, it may be best to use the helper
           methods for configuring particular options---they are individually
           documented.
-          * Default: empty dictionary.
-        * `**kw_options`: Further options may be provided as keyword
-          arguments.
-          * If a key appears in both `options` and `kw_options`, the latter's
-            value is used.
+          Default: empty dictionary.
         
-        Note: the internal survey options dictionary is modified through an
-        in-place union operation (`|=`). This means:
+        * `**kw_options`:
+          Further options may be provided as keyword arguments.
+        
+        Notes:
 
-        * If there are options with keys already set on the survey, and these
-          keys do not appear in `options` or `kw_options`, then those options
-          will not be changed.
-        * If there are options with keys already set on the survey, and these
-          keys do appear in `options` or `kw_options`, then those options'
-          values are changed to the values from `options` and `kw_options`
-          (if the key appears in both, `kw_options` is used).
+        * If a key appears in both `options` and `kw_options`, the latter's
+          value is used.
+        
+        * The internal survey options dictionary is modified through an
+          in-place union operation (`|=`). This means:
+          * If there are options with keys already set on the survey, and
+            these keys do not appear in `options` or `kw_options`, then those
+            options will not be changed.
+          * If there are options with keys already set on the survey, and
+            these keys do appear in `options` or `kw_options`, then those
+            options' values are changed to the values from `options` and
+            `kw_options` (if the key appears in both, `kw_options` is used).
         """
         self.options |= options | kw_options
+
 
     def set_header_html(self, header_html=""):
         """
@@ -118,20 +150,23 @@ class _Survey:
 
         Parameters:
 
-        * `header_html` (str): Source code (HTML) to be used for the survey
-          header.
+        * `header_html` (str):
+          Source code (HTML) to be used for the survey header.
 
         Notes:
 
         * Each time this method is called the header HTML is overwritten
           (it does not accummulate).
+        
         * The HTML code can include JavaScript inside `<script />` elements.
           (Not the case for some other HTML fields, such as Questions.)
+        
         * The header HTML is stored in the internal dictionary under the key
           `"Header"`. Therefore this method will interact with any options
           set through other means based on this key.
         """
         self.options['Header'] = header_html
+
 
     def set_footer_html(self, footer_html=""):
         """
@@ -140,20 +175,23 @@ class _Survey:
 
         Parameters:
 
-        * `footer_html` (str): Source code (HTML) to be used for the survey
-          footer.
+        * `footer_html` (str):
+          Source code (HTML) to be used for the survey footer.
 
         Notes:
 
         * Each time this method is called the footer HTML is overwritten
           (it does not accummulate).
+        
         * The footer HTML is stored in the internal dictionary under the key
           `"Footer"`. Therefore this method will interact with any options
           set through other means based on this key.
+        
         * The HTML code can include JavaScript inside `<script />` elements.
           (Not the case for some other HTML fields, such as Questions.)
         """
         self.options['Footer'] = footer_html
+
 
     def set_custom_css(self, custom_css=""):
         """
@@ -162,13 +200,14 @@ class _Survey:
 
         Parameters:
 
-        * `custom_css` (str): Source code (CSS) to be used for the survey
-          custom stylesheet.
+        * `custom_css` (str):
+          Source code (CSS) to be used for the survey custom stylesheet.
 
         Notes:
         
         * Each time this method is called the custom CSS is overwritten
           (it does not accummulate).
+        
         * The custom CSS is stored, wrapped in a dictionary, in the internal
           options dictionary under the key `"CustomStyles"`.
           Therefore this method will interact with any options set through
@@ -184,20 +223,22 @@ class _Survey:
 
         Parameters:
 
-        * `external_css_url` (str): URL for a remote stylesheet to be used
-          for the survey.
+        * `external_css_url` (str):
+          URL for a remote stylesheet to be used for the survey.
 
         Notes:
         
         * Each time this method is called the URL is overwritten. I am not
           aware of a way to add multiple remote stylesheets through this
           field (but I haven't looked---it may be possible).
+        
         * The external CSS URL is stored in the internal options dictionary
           under the key `"ExternalCSS"`.
           Therefore this method will interact with any options set through
           other means based on this key.
         """
         self.options['ExternalCSS'] = external_css_url
+
 
     def set_show_back_button(self, show_back_button=False):
         """
@@ -207,10 +248,10 @@ class _Survey:
 
         Parameters:
 
-        * `show_back_button` (bool): True if the back button should be
-          visible, else false.
-          * The Qualtrics default, active if this option is not explicitly
-            configured, is (??? I think not shown, but could be wrong ???).
+        * `show_back_button` (bool):
+          True if the back button should be visible, else false.
+          The Qualtrics default, active if this option is not explicitly
+          configured, is (???).
 
         Notes:
 
@@ -229,8 +270,9 @@ class _Survey:
 
         Parameters:
 
-        * `progress_bar_display` (str): One of a small number of magic
-          strings defined by the Qualtrics survey-definitions API.
+        * `progress_bar_display` (str):
+          One of a small number of magic strings defined by the Qualtrics
+          survey-definitions API:
           * `"VerboseText"`---???
           * (what other options are there?)
 
@@ -243,6 +285,7 @@ class _Survey:
         """
         self.options["ProgressBarDisplay"] = progress_bar_display
 
+
     def create(self, api):
         """
         Compose the virtual survey as a real Qualtrics survey by executing a
@@ -250,9 +293,9 @@ class _Survey:
 
         Parameters:
 
-        * `api` (QualtricsSurveyBuilderAPI object): an API object that
-          contains the credentials for the Qualtrics account you want the
-          survey to show up under.
+        * `api` (QualtricsSurveyBuilderAPI object):
+          An API object that contains the credentials for the Qualtrics
+          account you want the survey to show up under.
 
         Qualtrics API methods used:
 
@@ -265,7 +308,7 @@ class _Survey:
         
         Prints:
 
-        * A couple of disgnostic progress messages.
+        * A couple of diagnostic progress messages.
         * A link to edit the newly-created survey in the Qualtrics web
           editor.
         * A link to preview the newly-created survey in the Qualtrics survey
@@ -296,18 +339,141 @@ class _Survey:
 
 
 class BasicSurvey(_Survey):
+    """
+    Class representing a basic virtual Qualtrics survey, that is, a survey
+    comprising a straightforward list of questions (no block structure or
+    complex flows, though page breaks are possible).
 
-    def __init__(self, name, questions=(), options={}):
-        super().__init__(name, options)
+    Functionality:
+
+    * Stores survey name and global survey options (such as Header HTML and
+      CSS) provided at construction time or through methods.
+
+    * Stores a list of questions provided at construction or appended one at
+      a time after construction.
+
+    * The create method uses a Survey Builder API connection to create a real
+      survey and upload these options and questions to it.
+    """
+
+
+    def __init__(
+            self,
+            name="Test Survey",
+            questions=(),
+            options={},
+            **kw_options,
+        ):
+        """
+        Constructor for a basic virtual survey.
+        
+        Parameters:
+        
+        * `name` (str):
+          The survey name.
+          Default: 'Test Survey' (conventional during survey development)
+        
+        * `questions` (iterable of questions):
+          A list of questions (e.g. `_Question` or `PageBreak` objects),
+          forming the contents of the survey.
+          
+        * `options` (dict):
+          A dictionary of survey options.
+          The format is based on the survey definitions API. If you are
+          unfamiliar with this format, it may be best to use the helper
+          methods for configuring particular options---they are individually
+          documented.
+          Default: empty dictionary.
+        
+        * `**kw_options`:
+          Further options may be provided as keyword arguments.
+        
+        Notes:
+
+        * If a key appears in both `options` and `kw_options`, the latter's
+          value is used.
+        
+        * The idea is that the questions will be `_Question` objects or
+          `PageBreak` objects, but anything with the appropriate kind of 
+          `create` method should work (see documentation for this object's
+          `create` method and that of the `_Question` abstract base class).
+        """
+        super().__init__(name=name, options=options, **kw_options)
         self.questions = list(questions)
 
 
     def append_question(self, question):
+        """
+        Add a new question to the survey's internal list of questions.
+
+        Parameters:
+
+        * `question` (question, e.g. `_Question` or `PageBreak` object).
+          The question to add.
+        
+        Notes:
+
+        * The idea is that the question will be a `_Question` object or
+          `PageBreak` object, but anything with the appropriate kind of 
+          `create` method should work (see documentation for this object's
+          `create` method and that of the `_Question` abstract base class).
+        """
         self.questions.append(question)
         return question
 
 
+    def append_page_break(self):
+        """
+        Add a new page break to the survey's internal list of questions.
+
+        Notes:
+
+        * This is equivalent to `self.append_question(PageBreak())` but may
+          be considered more succinct, and may also satisfy someone who
+          finds adding a page break as a question unintuitive.
+        """
+        self.questions.append(PageBreak())
+
+
     def create(self, api):
+        """
+        Compose the virtual survey as a real Qualtrics survey by executing a
+        series of Qualtrics survey definitions API calls.
+
+        Parameters:
+
+        * `api` (QualtricsSurveyBuilderAPI object):
+          An API object that contains the credentials for the Qualtrics
+          account you want the survey to show up under.
+
+        Qualtrics API methods used:
+
+        * Calls `api.create_survey` to create a fresh survey in the account.
+        * Calls `api.partial_update_survey_options` to upload `self`'s
+          internal options dictionary to the newly-created survey. This
+          configures the survey with any options that have been passed to
+          `self` at construction time (or since via the `set_options` or
+          the dedicated configuration methods).
+        * For each question in the internal question list, calls the
+          question's `create` method, which in turn issues an API call
+          (`api.create_question` or `api.create_page_break`).
+        
+        Prints:
+
+        * A couple of diagnostic progress messages.
+        * A link to edit the newly-created survey in the Qualtrics web
+          editor.
+        * A link to preview the newly-created survey in the Qualtrics survey
+          previewer.
+        * A dynamic progress bar while the list of questions is sequentially
+          uploaded.
+
+        Returns:
+
+        * `survey_id` (str): The ID of the newly-created survey, to be used
+          with future API calls for accessing, modifying, and deleting this
+          survey.
+        """
         survey_id = super().create(api)
         
         n_questions = len(self.questions)
@@ -319,20 +485,137 @@ class BasicSurvey(_Survey):
         progress.close()
         print("survey", survey_id, "populated")
 
+        return survey_id
+
 
 class BlockSurvey(_Survey):
+    """
+    Class representing a block-based virtual Qualtrics survey, that is, a
+    survey comprising a straightforward list of blocks, with each block
+    comprising a straightforward list of questions (no complex flows).
 
-    def __init__(self, name, blocks=(), options={}):
-        super().__init__(name, options)
+    Functionality:
+
+    * Stores survey name and global survey options (such as Header HTML and
+      CSS) provided at construction time or through methods.
+
+    * Stores a list of blocks provided at construction or appended one at
+      a time after construction. The blocks are objects of type `Block` which
+      themselves store lists of questions.
+
+    * The create method uses a Survey Builder API connection to create a real
+      survey and upload these options, blocks, and block-questions to it.
+    """
+
+
+    def __init__(
+            self,
+            name="Test Survey",
+            blocks=(),
+            options={},
+            **kw_options,
+        ):
+        """
+        Constructor for a block-based virtual survey.
+        
+        Parameters:
+        
+        * `name` (str):
+          The survey name.
+          Default: 'Test Survey' (conventional during survey development)
+        
+        * `blocks` (iterable of blocks):
+          A list of blocks (`Block` objects) forming the contents of the
+          survey.
+          
+        * `options` (dict):
+          A dictionary of survey options.
+          The format is based on the survey definitions API. If you are
+          unfamiliar with this format, it may be best to use the helper
+          methods for configuring particular options---they are individually
+          documented.
+          Default: empty dictionary.
+        
+        * `**kw_options`:
+          Further options may be provided as keyword arguments.
+        
+        Notes:
+
+        * If a key appears in both `options` and `kw_options`, the latter's
+          value is used.
+        """
+        super().__init__(name=name, options=options, **kw_options)
         self.blocks = list(blocks)
 
 
     def append_block(self, block):
+        """
+        Add a new block to the survey's internal list of blocks.
+
+        Parameters:
+
+        * `block` (object of type `Block`):
+          The block to add.
+
+        Returns:
+
+        * `block`
+          (so as to support the following usage pattern:)
+
+        Example:
+
+        ```python
+        block_survey = BlockSurvey()
+        block = block_survey.append_block(Block())
+        # ...
+        block.append(question)
+        ```
+        """
         self.blocks.append(block)
         return block
 
 
     def create(self, api):
+        """
+        Compose the virtual survey as a real Qualtrics survey by executing a
+        series of Qualtrics survey definitions API calls.
+
+        Parameters:
+
+        * `api` (QualtricsSurveyBuilderAPI object):
+          An API object that contains the credentials for the Qualtrics
+          account you want the survey to show up under.
+
+        Qualtrics API methods used:
+
+        * Calls `api.create_survey` to create a fresh survey in the account.
+        * Calls `api.partial_update_survey_options` to upload `self`'s
+          internal options dictionary to the newly-created survey. This
+          configures the survey with any options that have been passed to
+          `self` at construction time (or since via the `set_options` or
+          the dedicated configuration methods).
+        * For each block in the internal block list, calls `api.create_block`
+          to add a corresponding block to the Qualtrics survey.
+        * For each question in the internal question list of each block,
+          calls the question's `create` method, which in turn issues an API
+          call (`api.create_question` or `api.create_page_break`).
+        
+        Prints:
+
+        * A couple of diagnostic progress messages.
+        * A link to edit the newly-created survey in the Qualtrics web
+          editor.
+        * A link to preview the newly-created survey in the Qualtrics survey
+          previewer.
+        * A dynamic progress bar while the blocks and their internal
+          questions are sequentially uploaded.
+
+        Returns:
+
+        * `survey_id` (str): The ID of the newly-created survey, to be used
+          with future API calls for accessing, modifying, and deleting this
+          survey.
+        """
         survey_id = super().create(api)
         
         n_blocks = len(self.blocks)
@@ -348,20 +631,131 @@ class BlockSurvey(_Survey):
         progress.close()
         print("survey", survey_id, "populated")
 
+        return survey_id
+
 
 class FlowSurvey(_Survey):
+    """
+    Class representing a flow-based virtual Qualtrics survey, that is, a
+    survey comprising a tree of 'flows' governing the sequence of blocks
+    encountered by survey participants.
 
-    def __init__(self, name, elements=(), options={}):
-        super().__init__(name, options)
+    Functionality:
+
+    * Stores survey name and global survey options (such as Header HTML and
+      CSS) provided at construction time or through methods.
+
+    * Stores a tree of flows provided at construction or appended to the root
+      flow one at a time after construction.
+      The flows are objects of type `_Flow`, some of which contain blocks
+      (which in turn contain questions), but there are other kinds of flows
+      too.
+
+      For more information see the documentation for `_Flow` subclasses, or
+      [the guide](guide.md).
+
+    * The create method uses a Survey Builder API connection to create a real
+      survey and upload these options, blocks, block-questions, and flows to
+      it.
+    """
+
+
+    def __init__(
+            self,
+            name="Test Survey",
+            elements=(),
+            options={},
+            **kw_options,
+        ):
+        """
+        Constructor for a flow-based virtual survey.
+        
+        Parameters:
+        
+        * `name` (str):
+          The survey name.
+          Default: 'Test Survey' (conventional during survey development)
+        
+        * `elements` (iterable of flows):
+          A list of flow elements (of type `_Flow`), to be attached to the
+          root flow.
+          
+        * `options` (dict):
+          A dictionary of survey options.
+          The format is based on the survey definitions API. If you are
+          unfamiliar with this format, it may be best to use the helper
+          methods for configuring particular options---they are individually
+          documented.
+          Default: empty dictionary.
+        
+        * `**kw_options`:
+          Further options may be provided as keyword arguments.
+        
+        Notes:
+
+        * If a key appears in both `options` and `kw_options`, the latter's
+          value is used.
+        """
+        super().__init__(name=name, options=options, **kw_options)
         self.elements = list(elements)
 
     
     def append_flow(self, flow):
+        """
+        Add a new flow element to the root flow's list of children.
+
+        Parameters:
+
+        * `flow` (object of type `_Flow`): The flow element to add.
+        """
         self.elements.append(flow)
-        return flow
 
 
     def create(self, api):
+        """
+        Compose the virtual survey as a real Qualtrics survey by executing a
+        series of Qualtrics survey definitions API calls.
+
+        Parameters:
+
+        * `api` (QualtricsSurveyBuilderAPI object):
+          An API object that contains the credentials for the Qualtrics
+          account you want the survey to show up under.
+
+        Qualtrics API methods used:
+
+        * Calls `api.create_survey` to create a fresh survey in the account.
+        * Calls `api.partial_update_survey_options` to upload `self`'s
+          internal options dictionary to the newly-created survey. This
+          configures the survey with any options that have been passed to
+          `self` at construction time (or since via the `set_options` or
+          the dedicated configuration methods).
+        * For each block attached to some block_flow in the flow tree
+          structure, calls `api.create_block` to add a corresponding block to
+          the Qualtrics survey.
+        * For each question in the internal question list of each of those
+          blocks, calls the question's `create` method, which in turn issues
+          an API call (`api.create_question` or `api.create_page_break`).
+        * Once all blocks and questions have been added to the survey, the
+          flow tree (with the allocated IDs of each uploaded block) is
+          uploaded in a single call to `api.update_flow`.
+        
+        Prints:
+
+        * A couple of diagnostic progress messages.
+        * A link to edit the newly-created survey in the Qualtrics web
+          editor.
+        * A link to preview the newly-created survey in the Qualtrics survey
+          previewer.
+        * A dynamic progress bar while the internal blocks and their internal
+          questions are sequentially uploaded.
+
+        Returns:
+
+        * `survey_id` (str): The ID of the newly-created survey, to be used
+          with future API calls for accessing, modifying, and deleting this
+          survey.
+        """
         survey_id = super().create(api)
 
         # create element tree
@@ -390,6 +784,8 @@ class FlowSurvey(_Survey):
             flow_data=root.flow_data(block_ids),
         )
         print("survey reflowed")
+
+        return survey_id
 
 
 # # # FLOWS
@@ -523,6 +919,7 @@ class Block:
     def __init__(self, questions=(), description="Standard Question Block"):
         self.questions = list(questions)
         self.description = description
+
 
     def append_question(self, question):
         self.questions.append(question)

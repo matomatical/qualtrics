@@ -7,7 +7,7 @@ Qualtrics survey-definitions REST API, along with a convenient object-oriented
 interface for building virtual surveys to load through that API.
 See 'Concept' section below for more.
 
-*Status: Minimally viable. Un-maintained.*
+*Status: Minimally viable. Un-maintained. Not systematically tested.*
 
 Contents:
 
@@ -19,8 +19,11 @@ Contents:
    * instructions to get this library installed.
    * instructions to get your API keys and routes.
    * instructions to compile a hello-world survey.
-   * for more examples and advice, see the [guide](GUIDE.md).
+   * for more examples and advice, see [the guide](GUIDE.md).
+   * for full library details, see [the reference](REFERENCE.md).
 4. Related tools---pointers to other Qualtrics-related code projects.
+
+
 
 1. Concept: Qualtrics Automation
 --------------------------------
@@ -203,6 +206,28 @@ monitored if/when I have time.
 If you want to contribute substantially, I advise you fork the project and
 take it in the direction you like.
 
+Note on documentation:
+
+* [The guide](GUIDE.md) is written by hand.
+  * Please keep it up-to-date with breaking API changes.
+  * When implementing a new feature, consider adding an example in the guide.
+* [The reference](REFERENCE.md) is automatically generated from the
+  docstrings in the source code (qualtrics.py)
+  * Do not manually modify REFERENCE.md.
+  * Instead, generate it using [`pdoc`](https://pdoc3.github.io/pdoc/).
+    * one-time install `pip install pdoc3` (note `pdoc3` not `pdoc`)
+    * followed by `pdoc qualtrics.py > REFERENCE.md` to update the reference
+      each time the library changes.
+  * Obviously, the docstrings in qualtrics.py must be kept up to date.
+
+TODO:
+
+* HTML documentation hosted easily with github pages from the doc folder,
+  and a makefile to generate it.
+* A whole developer section of this readme...!
+* Black code formatting?
+* Tests... hahaha...
+
 
 3. Quick start
 --------------
@@ -264,7 +289,8 @@ survey.create(api)
 
 For more usage examples and advice see the [guide](GUIDE.md).
 
-For complete information on available functions: TODO.
+For complete information on library functions see the [reference](REFERENCE.md).
+
 
 4. Related tools
 ----------------
