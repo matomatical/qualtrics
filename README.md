@@ -222,11 +222,25 @@ Note on documentation:
 
 TODO:
 
-* HTML documentation hosted easily with github pages from the doc folder,
-  and a makefile to generate it.
-* A whole developer section of this readme...!
-* Black code formatting?
-* Tests... hahaha...
+* [x] write the guide
+* [x] move into multiple files
+* [ ] complete documentation
+  * [x] Virtual survey
+  * [x] Virtual blocks
+  * [x] Virtual QuestionJS
+  * [ ] Virtual questions
+  * [ ] Virtual flows
+  * [ ] API wrapper
+  * [x] Recipes
+  * [x] notqdm
+* [ ] Generate documentation
+* [ ] Generate documentation in a convenient format (host with ghp?)
+
+Probably won't get time:
+
+* [ ] Make this into a proper developer section of the readme?
+* [ ] Black code formatting?
+* [ ] Tests... hahaha...
 
 
 3. Quick start
