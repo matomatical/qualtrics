@@ -28,31 +28,255 @@ except ImportError:
 # # # SURVEYS
 
 class _Survey:
+    """
+    Abstract base class representing a virtual Qualtrics survey.
 
-    def __init__(self, name, options):
+    Functionality:
+
+    * Stores survey name and global survey options (such as Header HTML and
+      CSS) provided at construction time or through methods.
+    * The create method uses a Survey Builder API connection to create a real
+      survey and upload these options to it.
+
+    The contents of the survey are stored and uploaded by the inheriting
+    subclass.
+
+    Instructions for inheriting:
+
+    * Subclasses should remember to call this class's constructor and
+      pass along any options provided at constructor time.
+    * Subclasses overriding the 'create' method should probably start with a
+      call to this class's create method to avoid having to repeat that code.
+    """
+
+    def __init__(self, name="Test Survey", options={}, **kw_options):
+        """
+        Base class constructor for a virtual survey.
+
+        Parameters:
+
+        * `name` (str): The survey name.
+          * Default: 'Test Survey' (conventional during survey development)
+        * `options` (dict): A dictionary of survey options.
+          The format is based on the survey definitions API. If you are
+          unfamiliar with this format, it may be best to use the helper
+          methods for configuring particular options---they are individually
+          documented.
+          * Default: empty dictionary.
+        * `**kw_options`: Further options may be provided as keyword
+          arguments.
+          * If a key appears in both `options` and `kw_options`, the latter's
+            value is used.
+        """
         self.name = name
-        self.options = options
+        self.options = options | kw_options
 
+    def set_name(self, name):
+        """
+        Overwrite the name set on the survey at construction time.
 
-    def set_options(self, **options):
-        self.options = self.options | options
+        Parameters:
 
+        * `name` (str): The new name.
+        """
+        self.name = name
+
+    def set_options(self, options={}, **kw_options):
+        """
+        Update the survey options with new options.
+
+        Parameters:
+
+        * `options` (dict): A dictionary of survey options.
+          The format is based on the survey definitions API. If you are
+          unfamiliar with this format, it may be best to use the helper
+          methods for configuring particular options---they are individually
+          documented.
+          * Default: empty dictionary.
+        * `**kw_options`: Further options may be provided as keyword
+          arguments.
+          * If a key appears in both `options` and `kw_options`, the latter's
+            value is used.
+        
+        Note: the internal survey options dictionary is modified through an
+        in-place union operation (`|=`). This means:
+
+        * If there are options with keys already set on the survey, and these
+          keys do not appear in `options` or `kw_options`, then those options
+          will not be changed.
+        * If there are options with keys already set on the survey, and these
+          keys do appear in `options` or `kw_options`, then those options'
+          values are changed to the values from `options` and `kw_options`
+          (if the key appears in both, `kw_options` is used).
+        """
+        self.options |= options | kw_options
 
     def set_header_html(self, header_html=""):
+        """
+        Set the global header HTML for the survey. This HTML is inserted
+        before the survey on every page of the survey.
+
+        Parameters:
+
+        * `header_html` (str): Source code (HTML) to be used for the survey
+          header.
+
+        Notes:
+
+        * Each time this method is called the header HTML is overwritten
+          (it does not accummulate).
+        * The HTML code can include JavaScript inside `<script />` elements.
+          (Not the case for some other HTML fields, such as Questions.)
+        * The header HTML is stored in the internal dictionary under the key
+          `"Header"`. Therefore this method will interact with any options
+          set through other means based on this key.
+        """
         self.options['Header'] = header_html
 
     def set_footer_html(self, footer_html=""):
+        """
+        Set the global header HTML for the survey. This HTML is inserted
+        after the survey on every page of the survey.
+
+        Parameters:
+
+        * `footer_html` (str): Source code (HTML) to be used for the survey
+          footer.
+
+        Notes:
+
+        * Each time this method is called the footer HTML is overwritten
+          (it does not accummulate).
+        * The footer HTML is stored in the internal dictionary under the key
+          `"Footer"`. Therefore this method will interact with any options
+          set through other means based on this key.
+        * The HTML code can include JavaScript inside `<script />` elements.
+          (Not the case for some other HTML fields, such as Questions.)
+        """
         self.options['Footer'] = footer_html
 
     def set_custom_css(self, custom_css=""):
+        """
+        Set the global custom stylesheet for the survey. This stylesheet is
+        linked on every page of the survey.
+
+        Parameters:
+
+        * `custom_css` (str): Source code (CSS) to be used for the survey
+          custom stylesheet.
+
+        Notes:
+        
+        * Each time this method is called the custom CSS is overwritten
+          (it does not accummulate).
+        * The custom CSS is stored, wrapped in a dictionary, in the internal
+          options dictionary under the key `"CustomStyles"`.
+          Therefore this method will interact with any options set through
+          other means based on this key.
+        """
         self.options['CustomStyles'] = {'customCSS': custom_css}
 
 
     def set_external_css_url(self, external_css_url=""):
+        """
+        Set a global custom remote stylesheet for the survey. This stylesheet is
+        linked on every page of the survey.
+
+        Parameters:
+
+        * `external_css_url` (str): URL for a remote stylesheet to be used
+          for the survey.
+
+        Notes:
+        
+        * Each time this method is called the URL is overwritten. I am not
+          aware of a way to add multiple remote stylesheets through this
+          field (but I haven't looked---it may be possible).
+        * The external CSS URL is stored in the internal options dictionary
+          under the key `"ExternalCSS"`.
+          Therefore this method will interact with any options set through
+          other means based on this key.
+        """
         self.options['ExternalCSS'] = external_css_url
 
+    def set_show_back_button(self, show_back_button=False):
+        """
+        Configure whether the back button is shown on each page of the
+        survey. Used to control whether to allow participants to back-track
+        to earlier pages in the survey, or not.
+
+        Parameters:
+
+        * `show_back_button` (bool): True if the back button should be
+          visible, else false.
+          * The Qualtrics default, active if this option is not explicitly
+            configured, is (??? I think not shown, but could be wrong ???).
+
+        Notes:
+
+        * The show back button flag is stored (JSON-encoded) in the internal
+          options dictionary under the key `"BackButton"`.
+          Therefore this method will interact with any options set through
+          other means based on this key.
+        """
+        self.options["BackButton"] = json.dumps(show_back_button)
+
+
+    def set_progress_bar_display(self, progress_bar_display="VerboseText"):
+        """
+        Configure whether and how the progress bar should be displayed on
+        each page of the survey.
+
+        Parameters:
+
+        * `progress_bar_display` (str): One of a small number of magic
+          strings defined by the Qualtrics survey-definitions API.
+          * `"VerboseText"`---???
+          * (what other options are there?)
+
+        Notes:
+        
+        * The progress bar display mode is stored in the internal options
+          dictionary under the key `"ProgressBarDisplay"`.
+          Therefore this method will interact with any options set through
+          other means based on this key.
+        """
+        self.options["ProgressBarDisplay"] = progress_bar_display
 
     def create(self, api):
+        """
+        Compose the virtual survey as a real Qualtrics survey by executing a
+        series of Qualtrics survey definitions API calls.
+
+        Parameters:
+
+        * `api` (QualtricsSurveyBuilderAPI object): an API object that
+          contains the credentials for the Qualtrics account you want the
+          survey to show up under.
+
+        Qualtrics API methods used:
+
+        * Calls `api.create_survey` to create a fresh survey in the account.
+        * Calls `api.partial_update_survey_options` to upload `self`'s
+          internal options dictionary to the newly-created survey. This
+          configures the survey with any options that have been passed to
+          `self` at construction time (or since via the `set_options` or
+          the dedicated configuration methods).
+        
+        Prints:
+
+        * A couple of disgnostic progress messages.
+        * A link to edit the newly-created survey in the Qualtrics web
+          editor.
+        * A link to preview the newly-created survey in the Qualtrics survey
+          previewer.
+
+        Returns:
+
+        * `survey_id` (str): The ID of the newly-created survey, to be used
+          with future API calls for accessing, modifying, and deleting this
+          survey.
+        """
         print("creating survey... ", end="", flush=True)
         survey_id = api.create_survey(survey_name=self.name)['SurveyID']
         print("survey created with id", survey_id)
@@ -920,6 +1144,7 @@ class SurveyOptions:
             "BackButton": back_button,
             "ProgressBarDisplay": progress_bar_display
         }
+
 
 # # # RECIPES
 
