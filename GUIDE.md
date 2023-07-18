@@ -371,7 +371,6 @@ API calls that build the survey inside Qualtrics. However, the library
 provides access to these API calls via the `QualtricsSurveyDefinitionsAPI`
 class.
 
-
 There are various API routes wrapped by the library as methods of this class.
 This includes methods for viewing, modifying, and deleting surveys from the
 Qualtrics account.

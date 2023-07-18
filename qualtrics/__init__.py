@@ -1,6 +1,6 @@
 """
-Qualtrics Survey Builder
-========================
+Automated Qualtrics Survey Building
+===================================
 
 **qualtrics.py** is a simple Python library for scripting the creation of
 Qualtrics surveys. It provides convenient wrapper methods for accessing the

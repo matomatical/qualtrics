@@ -719,7 +719,7 @@ class PageBreak(_Question):
 
         Parameters:
 
-        * `api` (a `QualtricsSurveyBuilderAPI` object):
+        * `api` (a `QualtricsSurveyDefinitionAPI` object):
           An API object that contains the credentials for the Qualtrics
           account for the page break to show up under.
 

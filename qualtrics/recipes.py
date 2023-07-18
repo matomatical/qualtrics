@@ -35,7 +35,7 @@ def delete_all_surveys_by_name(
 
     Parameters:
 
-    * `api` (of `QualtricsSurveyBuilderAPI` class):
+    * `api` (of `QualtricsSurveyDefinitionAPI` class):
       An API object that contains the credentials for the Qualtrics
       account you want the surveys to be cleared from.
     
@@ -128,7 +128,7 @@ def style_survey(
 
     Parameters:
 
-    * `api` (of `QualtricsSurveyBuilderAPI` class):
+    * `api` (of `QualtricsSurveyDefinitionAPI` class):
       An API object that contains the credentials for the Qualtrics
       account containing the survey you want to update.
     
@@ -156,7 +156,7 @@ def style_survey(
        Source code (JavaScript) to be added for you in a script tag to the
        HTML footer (if provided).
     
-    Qualtrics Survey Builder API calls:
+    Qualtrics Survey Definition API calls:
 
     * one call to `api.partial_update_survey_options`, which, if I recall
       correctly, actually involves two REST calls: first getting the existing

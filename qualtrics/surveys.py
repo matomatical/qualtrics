@@ -28,7 +28,7 @@ class _Survey:
     * Stores survey name and global survey options (such as Header HTML and
       CSS) provided at construction time or through methods.
 
-    * The create method uses a Survey Builder API connection to create a real
+    * The create method uses a Survey Definition API connection to create a real
       survey and upload these options to it.
 
     The contents of the survey are stored and uploaded by the inheriting
@@ -270,7 +270,7 @@ class _Survey:
 
         Parameters:
 
-        * `api` (`QualtricsSurveyBuilderAPI` object):
+        * `api` (`QualtricsSurveyDefinitionAPI` object):
           An API object that contains the credentials for the Qualtrics
           account you want the survey to show up under.
 
@@ -329,8 +329,8 @@ class BasicSurvey(_Survey):
     * Stores a list of questions provided at construction or appended one at
       a time after construction.
 
-    * The create method uses a Survey Builder API connection to create a real
-      survey and upload these options and questions to it.
+    * The create method uses a Survey Definition API connection to create a
+      real survey and upload these options and questions to it.
     """
 
 
@@ -419,7 +419,7 @@ class BasicSurvey(_Survey):
 
         Parameters:
 
-        * `api` (QualtricsSurveyBuilderAPI object):
+        * `api` (QualtricsSurveyDefinitionAPI object):
           An API object that contains the credentials for the Qualtrics
           account you want the survey to show up under.
 
@@ -480,8 +480,9 @@ class BlockSurvey(_Survey):
       a time after construction. The blocks are objects of type `Block` which
       themselves store lists of questions.
 
-    * The create method uses a Survey Builder API connection to create a real
-      survey and upload these options, blocks, and block-questions to it.
+    * The create method uses a Qualtrics Survey Definition API connection to
+      create a real survey and upload these options, blocks, and
+      block-questions to it.
     """
 
 
@@ -559,7 +560,7 @@ class BlockSurvey(_Survey):
 
         Parameters:
 
-        * `api` (QualtricsSurveyBuilderAPI object):
+        * `api` (QualtricsSurveyDefinitionAPI object):
           An API object that contains the credentials for the Qualtrics
           account you want the survey to show up under.
 
@@ -631,7 +632,7 @@ class FlowSurvey(_Survey):
       For more information see the documentation for `_Flow` subclasses, or
       [the guide](guide.md).
 
-    * The create method uses a Survey Builder API connection to create a real
+    * The create method uses a Survey Definition API connection to create a real
       survey and upload these options, blocks, block-questions, and flows to
       it.
     """
@@ -701,7 +702,7 @@ class FlowSurvey(_Survey):
 
         Parameters:
 
-        * `api` (QualtricsSurveyBuilderAPI object):
+        * `api` (QualtricsSurveyDefinitionAPI object):
           An API object that contains the credentials for the Qualtrics
           account you want the survey to show up under.
 
