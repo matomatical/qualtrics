@@ -270,7 +270,7 @@ class _Survey:
 
         Parameters:
 
-        * `api` (QualtricsSurveyBuilderAPI object):
+        * `api` (`QualtricsSurveyBuilderAPI` object):
           An API object that contains the credentials for the Qualtrics
           account you want the survey to show up under.
 
