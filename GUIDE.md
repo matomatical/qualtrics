@@ -161,7 +161,7 @@ from the more complex ones).
     the following:
     * `GroupFlow`: A non-leaf element---can have multiple elements as
       children, and they are traversed in sequence.
-    * `BlockRandomizerFlow`: A non-lead element. Configurable such that the
+    * `BlockRandomizerFlow`: A non-leaf element. Configurable such that the
       traversal will enter a random one or more of its children, in a random
       order, depending on the participant. Can be used for selecting
       conditions in a randomised experiment or for shuffling a sequence of
@@ -169,7 +169,7 @@ from the more complex ones).
     * `BlockFlow`: A leaf element. Each `BlockFlow` element has a `Block`
       attached to it. When the traversal hits such a flow element, the
       participant completes the attached block.
-    * `EndSurveyFlow`: Another leaf element. Treversing here ends the survey.
+    * `EndSurveyFlow`: Another leaf element. Traversing here ends the survey.
 
 Some examples of each of the survey types are given in the next section.
 
