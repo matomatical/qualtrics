@@ -7,7 +7,9 @@ Qualtrics survey-definitions REST API, along with a convenient object-oriented
 interface for building virtual surveys to load through that API.
 See 'Concept' section below for more.
 
-*Status: Minimally viable. Un-maintained. Not systematically tested.*
+*Status: Minimally viable.*
+Documented, but lacking input validation and not systematically tested.
+Un-maintained.
 
 Contents:
 
@@ -22,7 +24,6 @@ Contents:
    * for more examples and advice, see [the guide](GUIDE.md).
    * for full library details, see [the reference](REFERENCE.md).
 4. Related tools---pointers to other Qualtrics-related code projects.
-
 
 
 1. Concept: Qualtrics Automation
