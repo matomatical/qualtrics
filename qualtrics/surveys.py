@@ -15,7 +15,7 @@ try: # optional dependency on tqdm
 except ImportError:
     import qualtrics.notqdm as tqdm
 
-from qualtrics.flows import RootFlow
+from qualtrics.flows import RootFlow, BlockFlow
 from qualtrics.questions import PageBreak
 
 
@@ -693,6 +693,15 @@ class FlowSurvey(_Survey):
         """
         self.elements.append(flow)
         return flow
+    
+
+    def append_block(self, block):
+        """
+        A shortcut method to add a `BlockFlow` wrapping a given `block` (of
+        class `Block`) to the root flow's list of children.
+        """
+        self.append_flow(BlockFlow(block))
+        return block
 
 
     def create(self, api):

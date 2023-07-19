@@ -72,9 +72,8 @@ class _FlowElement:
       constructor.
 
     * Subclasses that represent leaf nodes don't pass an initial list to the
-      superclass constructor and override `append_flow` to raise an Exception
-      (this is sufficient since `append_block` calls `append_flow`
-      internally).
+      superclass constructor and override `append_flow` and `append_block` to
+      raise exceptions.
     """
     def __init__(self, children=(), **kwargs):
         """
