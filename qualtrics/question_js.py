@@ -190,3 +190,18 @@ class QuestionJS:
         )
 
 
+def setEmbeddedData(key, expression_js):
+    """
+    Use `key` (str) to store the result of javascript expression
+    `expression_js` in the survey's database.
+    """
+    return f'Qualtrics.SurveyEngine.setEmbeddedData("{key}",{expression_js});'
+
+
+def getEmbeddedData(key):
+    """
+    A javascript expression to fetch the data stored in the survey's database
+    using `key` (str).
+    """
+    return f'${{e://Field/{key}}}'
+
