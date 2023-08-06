@@ -26,8 +26,7 @@ Contents:
 4. Related tools---pointers to other Qualtrics-related code projects.
 
 
-1. Concept: Qualtrics Automation
---------------------------------
+## 1. Concept: Qualtrics Automation
 
 [Qualtrics](https://www.qualtrics.com/) is an online platform for designing
 and distributing surveys and collecting responses. The traditional way to
@@ -123,8 +122,7 @@ Have fun!
   been able to build this library as a way to avoid using their web editor
   almost entirely. So, thanks I guess.
 
-2. Features
------------
+## 2. Features
 
 > To be clear: Let me start with a list of *non-features*:
 > 
@@ -244,8 +242,7 @@ Probably won't get time:
 * [ ] Tests... hahaha...
 
 
-3. Quick start
---------------
+## 3. Quick start
 
 ### Installation
 
@@ -307,8 +304,7 @@ For more usage examples and advice see the [guide](GUIDE.md).
 For complete information on library functions see the [reference](REFERENCE.md).
 
 
-4. Related tools
-----------------
+## 4. Related tools
 
 I haven't found anything that provides a convenient way to automate survey
 *building* (hence making this).
