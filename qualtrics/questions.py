@@ -440,7 +440,7 @@ class SliderQuestion(_Question):
             choice_labels = ["",] * num_sliders
         elif num_sliders is None:
             num_sliders = len(choice_labels)
-        elif len(choice_labels) != num_slides:
+        elif len(choice_labels) != num_sliders:
             raise ValueError("choice_labels and num_sliders disagree")
         # proceed...
         super().__init__(data={
@@ -558,7 +558,7 @@ class ConstantSumQuestion(_Question):
             choice_labels = ["",] * num_sliders
         elif num_sliders is None:
             num_sliders = len(choice_labels)
-        elif len(choice_labels) != num_slides:
+        elif len(choice_labels) != num_sliders:
             raise ValueError("choice_labels and num_sliders disagree")
         if num_sliders <= 1:
             raise ValueError("constant sum must have at least 2 sliders!")
