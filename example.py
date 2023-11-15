@@ -30,7 +30,7 @@ for i in range(NUM_BLOCKS):
         # add a multiple choice question into this page of the block
         block.append_question(qq.MultipleChoiceQuestion(
             data_export_tag="Q"+str(i)+"."+str(q_index)+".1",
-            options=["Choice 1", "Choice 2", "Choice 3"],
+            options=["Choice 1", "Choice 2", "Choice 3", "Self-specified"],
             text_html="Select a choice",
             force_response=True,
         ))
