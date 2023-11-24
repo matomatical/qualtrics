@@ -442,6 +442,12 @@ class SliderQuestion(_Question):
             num_sliders = len(choice_labels)
         elif len(choice_labels) != num_sliders:
             raise ValueError("choice_labels and num_sliders disagree")
+        
+        # set gridlines
+        slider_diff = slider_max - slider_min
+        if slider_diff > 20:
+            slider_diff = 9
+
         # proceed...
         super().__init__(data={
             'DataExportTag': data_export_tag,
@@ -454,7 +460,7 @@ class SliderQuestion(_Question):
                 'CSSliderMin': slider_min,
                 'CSSliderMax': slider_max,
                 'CustomStart': False,
-                'GridLines': 10,
+                'GridLines': slider_diff,
                 'MobileFirst': True,
                 'NotApplicable': False,
                 'NumDecimals': "0",
@@ -567,6 +573,12 @@ class ConstantSumQuestion(_Question):
             selector_string = 'HSLIDER'
         elif selector == 'bar':
             selector_string = 'HBAR'
+          
+        # set gridlines
+        slider_diff = slider_max - slider_min
+        if slider_diff > 20:
+            slider_diff = 9 # will be 10 ticks on the slider (no of ticks = slider_diff + 1)
+
         # TODO: third type, based on choices, different (involves typing)
         else:
             raise ValueError("selector should be 'slider' or 'bar'")
@@ -582,7 +594,7 @@ class ConstantSumQuestion(_Question):
                 'CSSliderMin': slider_min,
                 'CSSliderMax': slider_max,
                 'CustomStart': False,
-                'GridLines': 10,
+                'GridLines': slider_diff,
                 'NumDecimals': '0',
                 'QuestionDescriptionOption': 'UseText',
                 'ShowValue': True
